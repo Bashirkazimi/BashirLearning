@@ -27,7 +27,9 @@ def alex_net(
         pool_stride_list=[2, 2, 2]
 ):
     """
-    Returns alex net keras model. kernel, stride, and pool lists should be carefully given
+    Returns alex net keras model:
+    https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf
+    kernel, stride, and pool lists should be carefully given
     based on the input shape in order to avoid layer output dimensions to go negative due
     to strides/downsampling. Default parameters give alex net. For a similar model to ZFNet,
     give the following list after num_classes: [7, 5, 3, 3, 3], [2, 2, 1, 1, 1], [3, 3, 3], [2, 2, 2]
@@ -195,12 +197,9 @@ def alex_net(
     return model
 
 
-def vgg_net(
-        input_shape=(224,224,3),
-        num_classes=1000
-):
+def vgg_net(input_shape=(224,224,3),num_classes=1000):
     """
-    Returns vgg net keras model.
+    Returns vgg net keras model: https://arxiv.org/pdf/1409.1556.pdf
     :param input_shape: input shape
     :type input_shape: tuple with 3 integer elements (height, width, channels)
     :param num_classes: number of categories to classify
@@ -389,7 +388,7 @@ def vgg_net(
 
 class InceptionBlock(tf.keras.layers.Layer):
     """
-    Implementation of the inception module
+    Implementation of the inception module in inception v1
     """
     def __init__(self, filters):
         super(InceptionBlock, self).__init__()
@@ -441,60 +440,261 @@ class InceptionBlock(tf.keras.layers.Layer):
         return tf.keras.layers.Concatenate()([conv3, conv11, conv22, maxconv])
 
 
-def create_3_inceptions(input_tensor):
+class InceptionBlockA(tf.keras.layers.Layer):
     """
-    Given an input tensor, passes it through three blocks of inception and returns the output.
-    Additionally, it passes the final result through fully connected layers and returns the output.
-    :param input_tensor: input tensor to inceptify
+    Implementation of the inception module A in inception v2
+    """
+    def __init__(self, filters):
+        super(InceptionBlockA, self).__init__()
+        self.filters = filters
+
+    def call(self, inputs):
+        conv1 = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(inputs)
+        conv2 = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(inputs)
+        maxpool1 = tf.keras.layers.MaxPooling2D(
+            3,
+            1,
+            padding='same'
+        )(inputs)
+        conv3 = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(inputs)
+        conv11 = tf.keras.layers.Conv2D(
+            self.filters,
+            3,
+            1,
+            padding='same'
+        )(conv1)
+        conv22 = tf.keras.layers.Conv2D(
+            self.filters,
+            3,
+            1,
+            padding='same'
+        )(conv2)
+        conv22 = tf.keras.layers.Conv2D(
+            self.filters,
+            3,
+            1,
+            padding='same'
+        )(conv22)
+        maxconv = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(maxpool1)
+
+        return tf.keras.layers.Concatenate()([conv3, conv11, conv22, maxconv])
+
+
+class InceptionBlockB(tf.keras.layers.Layer):
+    """
+    Implementation of the module B in inception v2
+    """
+    def __init__(self, filters):
+        super(InceptionBlockB, self).__init__()
+        self.filters = filters
+
+    def call(self, inputs):
+        conv1 = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(inputs)
+        conv2 = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(inputs)
+        maxpool1 = tf.keras.layers.MaxPooling2D(
+            3,
+            1,
+            padding='same'
+        )(inputs)
+        conv3 = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(inputs)
+        conv11 = tf.keras.layers.Conv2D(
+            self.filters,
+            (1,7),
+            1,
+            padding='same'
+        )(conv1)
+        conv11 = tf.keras.layers.Conv2D(
+            self.filters,
+            (7,1),
+            1,
+            padding='same'
+        )(conv11)
+        conv11 = tf.keras.layers.Conv2D(
+            self.filters,
+            (1,7),
+            1,
+            padding='same'
+        )(conv11)
+        conv11 = tf.keras.layers.Conv2D(
+            self.filters,
+            (7,1),
+            1,
+            padding='same'
+        )(conv11)
+
+        conv22 = tf.keras.layers.Conv2D(
+            self.filters,
+            (1,7),
+            1,
+            padding='same'
+        )(conv2)
+        conv22 = tf.keras.layers.Conv2D(
+            self.filters,
+            (7,1),
+            1,
+            padding='same'
+        )(conv22)
+        maxconv = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(maxpool1)
+
+        return tf.keras.layers.Concatenate()([conv3, conv11, conv22, maxconv])
+
+
+class InceptionBlockC(tf.keras.layers.Layer):
+    """
+    Implementation of the inception module C in inception v2
+    """
+    def __init__(self, filters):
+        super(InceptionBlockC, self).__init__()
+        self.filters = filters
+
+    def call(self, inputs):
+        conv1 = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(inputs)
+        conv2 = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(inputs)
+        maxpool1 = tf.keras.layers.MaxPooling2D(
+            3,
+            1,
+            padding='same'
+        )(inputs)
+        conv3 = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(inputs)
+        conv11 = tf.keras.layers.Conv2D(
+            self.filters,
+            3,
+            1,
+            padding='same'
+        )(conv1)
+        conv111 = tf.keras.layers.Conv2D(
+            self.filters//2,
+            (1,3),
+            1,
+            padding='same'
+        )(conv11)
+        conv112 = tf.keras.layers.Conv2D(
+            self.filters//2,
+            (3,1),
+            1,
+            padding='same'
+        )(conv11)
+
+        conv21 = tf.keras.layers.Conv2D(
+            self.filters//2,
+            (1,3),
+            1,
+            padding='same'
+        )(conv2)
+        conv22 = tf.keras.layers.Conv2D(
+            self.filters//2,
+            (3,1),
+            1,
+            padding='same'
+        )(conv2)
+        maxconv = tf.keras.layers.Conv2D(
+            self.filters,
+            1,
+            1,
+            padding='same'
+        )(maxpool1)
+
+        return tf.keras.layers.Concatenate()([conv3, conv112, conv111, conv21, conv22, maxconv])
+
+
+def auxiliary_classifier(input_tensor, v=3, num_classes=1000):
+    """
+    Creates the auxiliary classifier branch for inception models
+    :param input_tensor: input tensor
     :type input_tensor: keras tensor
-    :return: output of three inception blocks, and output of FC layers
-    :rtype: keras tensor, keras tensor
+    :param v: version 2 or 3 of inception model
+    :type v: integer
+    :param num_classes: number of classes to classify
+    :type num_classes: integer
+    :return: output of auxiliary classifier for inception
+    :rtype: keras tensor
     """
-
-    inc_block1 = InceptionBlock(64)(input_tensor)
-    inc_block2 = InceptionBlock(96)(inc_block1)
-    inc_block3 = InceptionBlock(128)(inc_block2)
-
     avg_pool = tf.keras.layers.AveragePooling2D(
         5,
         3,
-    )(inc_block3)
-
+    )(input_tensor)
     conv_block_1 = tf.keras.layers.Conv2D(
         128,
         1,
         1,
         padding='same'
     )(avg_pool)
-
-    # FC layers
     flattened = tf.keras.layers.Flatten()(conv_block_1)
     fc1 = tf.keras.layers.Dense(
         1024,
         activation='relu'
     )(flattened)
+    if v==3:
+        fc1 = tf.keras.layers.BatchNormalization()(fc1)
     fc1 = tf.keras.layers.Dropout(
-        rate=0.5
+        rate=0.7
     )(fc1)
-    fc2 = tf.keras.layers.Dense(
-        1024,
-        activation='relu'
-    )(fc1)
-    fc2 = tf.keras.layers.Dropout(
-        rate=0.5
-    )(fc2)
-
-    return inc_block3, fc2
+    fc2 = tf.keras.layers.Dense(num_classes)(fc1)
+    return fc2
 
 
-def inception_net(input_shape=(224,224,3), num_classes=1000):
+def inception_v1(input_shape=(224,224,3), num_classes=1000):
     """
-    Returns the inception v1 model in keras. It creates three level classifier as shown in the original paper, but it
-    could be edited to create a single level classifier. It is referred to as GoogLeNet
-    :param input_shape: shape if the input image
-    :type input_shape: tuple of 3 integers
-    :param num_classes: number of categories
-    :type num_classes: integer
+    Returns inception_v1 model (https://arxiv.org/pdf/1409.4842.pdf)
+    :param input_shape:
+    :type input_shape:
+    :param num_classes:
+    :type num_classes:
     :return: keras model of inception v1
     :rtype: keras model
     """
@@ -513,55 +713,200 @@ def inception_net(input_shape=(224,224,3), num_classes=1000):
         2,
         padding='same'
     )(conv1)
-
-    lrn1 = LRN()(max_pool1)
-
+    max_pool1 = LRN()(max_pool1)
     conv2 = tf.keras.layers.Conv2D(
         192,
         3,
         1,
         activation='relu',
         padding='same'
-    )(lrn1)
+    )(max_pool1)
     max_pool2 = tf.keras.layers.MaxPooling2D(
         3,
         2,
         padding='same'
     )(conv2)
+    max_pool2 = LRN()(max_pool2)
 
-    lrn2 = LRN()(max_pool2)
+    inception3a = InceptionBlock(64)(max_pool2)
+    inception3b = InceptionBlock(120)(inception3a)
 
-    max_pool3 = tf.keras.layers.MaxPooling2D(
+    maxpool = tf.keras.layers.MaxPooling2D(
         3,
         2,
         padding='same'
-    )(lrn2)
+    )(inception3b)
 
-    inceptioned_1, fc_1 = create_3_inceptions(max_pool3)
-    softmax_layer_1 = tf.keras.layers.Dense(
-        num_classes,
-        activation='softmax'
-    )(fc_1)
+    inception4a = InceptionBlock(128)(maxpool)
 
-    inceptioned_2, fc_2 = create_3_inceptions(inceptioned_1)
-    softmax_layer_2 = tf.keras.layers.Dense(
-        num_classes,
-        activation='softmax'
-    )(fc_2)
+    aux_1 = auxiliary_classifier(inception4a, v=1, num_classes=num_classes)
 
-    _, fc_3 = create_3_inceptions(inceptioned_2)
-    softmax_layer_3 = tf.keras.layers.Dense(
-        num_classes,
-        activation='softmax'
-    )(fc_3)
+    inception4b = InceptionBlock(128)(inception4a)
+    inception4c = InceptionBlock(128)(inception4b)
+    inception4d = InceptionBlock(132)(inception4c)
+
+    aux_2 = auxiliary_classifier(inception4d, v=1, num_classes=num_classes)
+
+    inception4e = InceptionBlock(208)(inception4d)
+
+    maxpool = tf.keras.layers.MaxPooling2D(
+        3,
+        2,
+        padding='same'
+    )(inception4e)
+
+    inception5a = InceptionBlock(208)(maxpool)
+    inception5b = InceptionBlock(256)(inception5a)
+
+    avg_pool = tf.keras.layers.AveragePooling2D(
+        7,
+        1,
+    )(inception5b)
+
+    dropout = tf.keras.layers.Dropout(
+        rate=0.4
+    )(avg_pool)
+
+    flat = tf.keras.layers.Flatten()(dropout)
+    dense = tf.keras.layers.Dense(num_classes)(flat)
+    softmax = tf.keras.layers.Activation('softmax')(dense)
+
+    softmax_aux1 = tf.keras.layers.Activation('softmax')(aux_1)
+    softmax_aux2 = tf.keras.layers.Activation('softmax')(aux_2)
 
     model = tf.keras.Model(
         inputs=input_layer,
-        outputs=[softmax_layer_1, softmax_layer_2, softmax_layer_3]
+        outputs=[softmax, softmax_aux1, softmax_aux2]
     )
     return model
 
 
+class GridReducer(tf.keras.layers.Layer):
+    """
+    Implementation of the grid reduction for inception v2
+    """
+    def __init__(self, filters):
+        super(GridReducer, self).__init__()
+        self.filters = filters
 
+    def __call__(self, inputs):
+        maxpool = tf.keras.layers.MaxPooling2D(
+            2,
+            2,
+            padding='valid'
+        )(inputs)
+        conv = tf.keras.layers.Conv2D(
+            self.filters,
+            2,
+            2,
+            padding='valid'
+        )(inputs)
+
+        return tf.keras.layers.Concatenate()([conv, maxpool])
+
+
+def inception_v2_or_v3(input_shape=(299,299,3), num_classes=1000, v=3):
+    """
+    Returns the inception v2 or v3 model (https://arxiv.org/pdf/1512.00567v3.pdf) in keras.
+    :param input_shape: shape if the input image
+    :type input_shape: tuple of 3 integers
+    :param num_classes: number of categories
+    :type num_classes: integer
+    :param v: indicate if version 2 and 3 is desired
+    :type v: integer
+    :return: keras model of inception v2
+    :rtype: keras model
+    """
+    input_layer = tf.keras.layers.Input(
+        shape=input_shape
+    )
+    conv1 = tf.keras.layers.Conv2D(
+        32,
+        3,
+        2,
+        activation='relu',
+        padding='valid'
+    )(input_layer)
+    conv1 = tf.keras.layers.Conv2D(
+        32,
+        3,
+        1,
+        activation='relu',
+        padding='same'
+    )(conv1)
+    conv1 = tf.keras.layers.Conv2D(
+        64,
+        3,
+        1,
+        activation='relu',
+        padding='valid'
+    )(conv1)
+    max_pool1 = tf.keras.layers.MaxPooling2D(
+        3,
+        2,
+        padding='valid'
+    )(conv1)
+    conv1 = tf.keras.layers.Conv2D(
+        80,
+        3,
+        1,
+        activation='relu',
+        padding='valid'
+    )(max_pool1)
+    conv1 = tf.keras.layers.Conv2D(
+        192,
+        3,
+        2,
+        activation='relu',
+        padding='valid'
+    )(conv1)
+    conv1 = tf.keras.layers.Conv2D(
+        288,
+        3,
+        1,
+        activation='relu',
+        padding='same'
+    )(conv1)
+
+    conv1 = InceptionBlockA(96)(conv1)
+    conv1 = InceptionBlockA(96)(conv1)
+    conv1 = InceptionBlockA(96)(conv1)
+
+    conv1 = GridReducer(384)(conv1)
+
+    conv1 = InceptionBlockB(160)(conv1)
+
+    aux_1 = auxiliary_classifier(conv1, v, num_classes)
+
+    conv1 = InceptionBlockB(160)(conv1)
+    conv1 = InceptionBlockB(160)(conv1)
+    conv1 = InceptionBlockB(160)(conv1)
+    conv1 = InceptionBlockB(160)(conv1)
+
+    aux_2 = auxiliary_classifier(conv1, v, num_classes)
+
+    conv1 = GridReducer(640)(conv1)
+
+    conv1 = InceptionBlockC(512)(conv1)
+    conv1 = InceptionBlockC(512)(conv1)
+
+    max_pool1 = tf.keras.layers.MaxPooling2D(
+        8,
+        1,
+        padding='valid'
+    )(conv1)
+
+    flat = tf.keras.layers.Flatten()(max_pool1)
+    dense = tf.keras.layers.Dense(num_classes)(flat)
+    softmax = tf.keras.layers.Activation('softmax', name='output_final')(dense)
+
+    softmax_aux1 = tf.keras.layers.Activation('softmax',name='auxiliary_1')(aux_1)
+    softmax_aux2 = tf.keras.layers.Activation('softmax',name='auxililary_2')(aux_2)
+
+    model = tf.keras.Model(
+        inputs=input_layer,
+        outputs=[softmax, softmax_aux1, softmax_aux2]
+    )
+    return model
 
 
