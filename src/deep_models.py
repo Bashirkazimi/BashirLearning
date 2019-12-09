@@ -910,3 +910,147 @@ def inception_v2_or_v3(input_shape=(299,299,3), num_classes=1000, v=3):
     return model
 
 
+def resnetblock_v1(input_tensor, filters):
+    """
+    implements a simple resnet block
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :param filters: filters to apply
+    :type filters: integer
+    :return: output of a resnet block
+    :rtype: keras tensor
+    """
+    x = tf.keras.layers.Conv2D(
+        filters,
+        3,
+        padding='same'
+    )(input_tensor)
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = tf.keras.layers.Activation('relu')(x)
+    x = tf.keras.layers.Conv2D(
+        filters,
+        3,
+        padding='same'
+    )(x)
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = x+input_tensor
+    x = tf.keras.layers.Activation('relu')(x)
+    return x
+
+
+def resnetblock_v2(input_tensor, filters):
+    """
+    implements an advanced resnet block
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :param filters: filters to apply
+    :type filters: integer
+    :return: output of a resnet block
+    :rtype: keras tensor
+    """
+    x = tf.keras.layers.Conv2D(
+        filters//4,
+        1,
+        padding='same'
+    )(input_tensor)
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = tf.keras.layers.Activation('relu')(x)
+    x = tf.keras.layers.Conv2D(
+        filters//4,
+        3,
+        padding='same'
+    )(x)
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = tf.keras.layers.Activation('relu')(x)
+    x = tf.keras.layers.Conv2D(
+        filters,
+        1,
+        padding='same'
+    )(x)
+
+    # x = tf.keras.layers.Concatenate()([input_tensor, x])
+    x = x+input_tensor
+    x = tf.keras.layers.Activation('relu')(x)
+    return x
+
+
+def create_resnetBlocks(x, filter, n, resnetBlockFunc, halved=False):
+    """
+    creates resnet blocks n number of times
+    :param x: input tensor
+    :type x: keras tensor
+    :param filter: filter size
+    :type filter: integer
+    :param n: how many blocks
+    :type n: integer
+    :param halved: reduced spatial dimension or not
+    :type halved: boolean
+    :return: keras tensor result
+    :rtype: keras tensor
+    """
+    for i in range(n):
+        x = resnetBlockFunc(x, filter)
+    if halved:
+        x = tf.keras.layers.Conv2D(
+            filter*2,
+            1,
+            2,
+            padding='same'
+            )(x)
+    return x
+
+
+def resnet(input_shape=(224,224,3), num_classes=1000, block_version=1, num_layers = 34):
+    """
+    ResNet model based on https://arxiv.org/pdf/1512.03385v1.pdf
+    :param input_shape: shape of the input image
+    :type input_shape: tuple of 3 integers
+    :param num_classes: number of categories
+    :type num_classes: integer
+    :param block_version: simple resnet block (1) or advanced(2)
+    :type block_version: integer
+    :param num_layers: number of layers (one of [18, 34, 50, 101, 152])
+    :type num_layers: integer
+    :return: a resnet classification model
+    :rtype: keras model
+    """
+
+    # use simple or advanced resnet block?
+    blockFunc = resnetblock_v1 if block_version == 1 else resnetblock_v2
+
+    # how many resnet blocks based on num_layers argument
+    num_blocks_dict = {18: [2,2,2,2], 34: [3,4,6,3], 50: [3,4,6,3], 101: [3,4,23,3], 152: [3,8,36,3]}
+    num_blocks = num_blocks_dict[num_layers]
+
+    # num_filters
+    filters_list = [64, 128, 256, 512]
+
+    inp = tf.keras.layers.Input(shape=input_shape)
+    x = tf.keras.layers.Conv2D(
+        64,
+        7,
+        2,
+        padding='same'
+    )(inp)
+    x = tf.keras.layers.MaxPooling2D(
+        3,
+        2,
+        padding='same'
+    )(x)
+
+    # resnet blocks!
+    halved = True
+    for e, nb_filter in enumerate(zip(num_blocks, filters_list)):
+        nb, k = nb_filter
+        if e+1 == len(num_blocks):
+            halved = False
+        x = create_resnetBlocks(x, k, nb, blockFunc, halved)
+
+    # average pooling and softmax
+    x = tf.keras.layers.GlobalAveragePooling2D()(x)
+    x = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
+
+    # create model and return
+    model = tf.keras.Model(inputs=inp, outputs=x)
+    model.summary()
+    return model
