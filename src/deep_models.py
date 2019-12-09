@@ -940,7 +940,8 @@ def resnetblock_v1(input_tensor, filters):
 
 def resnetblock_v2(input_tensor, filters):
     """
-    implements a v2 resnet block
+    implements a v2 resnet block. Instead of zero padding for shortcut connection, I have made sure the filters at
+    the end match the filters in the input tensor.
     :param input_tensor: input tensor
     :type input_tensor: keras tensor
     :param filters: filters to apply
@@ -968,7 +969,50 @@ def resnetblock_v2(input_tensor, filters):
         padding='same'
     )(x)
 
-    # x = tf.keras.layers.Concatenate()([input_tensor, x])
+    x = x+input_tensor
+    x = tf.keras.layers.Activation('relu')(x)
+    return x
+
+
+def resnextblock(input_tensor, filters, cardinality=32):
+    """
+    implements a resnext block. Instead of zero padding for shortcut connection, I have made sure the filters at
+    the end match the filters in the input tensor.
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :param filters: filters to apply
+    :type filters: integer
+    :param cardinality: number of paths in resnext block
+    :type cardinality: integer
+    :return: output of a resnext block
+    :rtype: keras tensor
+    """
+    def conv_ops(input_tensor):
+        x = tf.keras.layers.Conv2D(
+            filters // 4,
+            1,
+            padding='same'
+        )(input_tensor)
+        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.Activation('relu')(x)
+        x = tf.keras.layers.Conv2D(
+            filters // 4,
+            3,
+            padding='same'
+        )(x)
+        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.Activation('relu')(x)
+        x = tf.keras.layers.Conv2D(
+            filters,
+            1,
+            padding='same'
+        )(x)
+        return x
+
+    x = conv_ops(input_tensor)
+    for i in range(cardinality-1):
+        x += conv_ops(input_tensor)
+
     x = x+input_tensor
     x = tf.keras.layers.Activation('relu')(x)
     return x
@@ -976,7 +1020,7 @@ def resnetblock_v2(input_tensor, filters):
 
 def create_resnetBlocks(x, filter, n, resnetBlockFunc, halved=False):
     """
-    creates resnet blocks n number of times
+    creates resnet/resnext blocks n number of times
     :param x: input tensor
     :type x: keras tensor
     :param filter: filter size
@@ -992,6 +1036,36 @@ def create_resnetBlocks(x, filter, n, resnetBlockFunc, halved=False):
     """
     for i in range(n):
         x = resnetBlockFunc(x, filter)
+    if halved:
+        x = tf.keras.layers.Conv2D(
+            filter*2,
+            1,
+            2,
+            padding='same'
+            )(x)
+    return x
+
+
+def create_resnextBlocks(x, filter, n, resnetBlockFunc, halved=False, cadinality=32):
+    """
+    creates resnet/resnext blocks n number of times
+    :param x: input tensor
+    :type x: keras tensor
+    :param filter: filter size
+    :type filter: integer
+    :param n: how many blocks
+    :type n: integer
+    :param resnetBlockFunc: which version to use
+    :type python function
+    :param halved: reduced spatial dimension or not
+    :type halved: boolean
+    :param cadinality: cardinality of resnext block
+    :type cadinality: integer
+    :return: keras tensor result
+    :rtype: keras tensor
+    """
+    for i in range(n):
+        x = resnetBlockFunc(x, filter, cadinality)
     if halved:
         x = tf.keras.layers.Conv2D(
             filter*2,
@@ -1019,6 +1093,7 @@ def resnet(input_shape=(224,224,3), num_classes=1000, version=1, num_layers = 34
 
     # use v1 or v2 resnet block?
     blockFunc = resnetblock_v1 if version == 1 else resnetblock_v2
+    # print(blockFunc)
 
     # how many resnet blocks based on num_layers argument
     num_blocks_dict = {18: [2,2,2,2], 34: [3,4,6,3], 50: [3,4,6,3], 101: [3,4,23,3], 152: [3,8,36,3]}
@@ -1044,9 +1119,62 @@ def resnet(input_shape=(224,224,3), num_classes=1000, version=1, num_layers = 34
     halved = True
     for e, nb_filter in enumerate(zip(num_blocks, filters_list)):
         nb, k = nb_filter
-        if e+1 == len(num_blocks):
-            halved = False
+        # if e+1 == len(num_blocks):
+        #     halved = False
         x = create_resnetBlocks(x, k, nb, blockFunc, halved)
+
+    # average pooling and softmax
+    x = tf.keras.layers.GlobalAveragePooling2D()(x)
+    x = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
+
+    # create model and return
+    model = tf.keras.Model(inputs=inp, outputs=x)
+    model.summary()
+    return model
+
+
+def resnext(input_shape=(224,224,3), num_classes=1000, num_layers=4, cardinality=32):
+    """
+    ResNet model based on https://arxiv.org/pdf/1611.05431.pdf
+    :param input_shape: shape of the input image
+    :type input_shape: tuple of 3 integers
+    :param num_classes: number of categories
+    :type num_classes: integer
+    :param num_layers: number of layers (one of [18, 34, 50, 101, 152])
+    :type num_layers: integer
+    :param cardinality: cardinality of resnext block
+    :type cardinality: integer
+    :return: a resnet classification model
+    :rtype: keras model
+    """
+
+    # how many resnet blocks based on num_layers argument
+    num_blocks_dict = {18: [2,2,2,2], 34: [3,4,6,3], 50: [3,4,6,3], 101: [3,4,23,3], 152: [3,8,36,3]}
+    num_blocks = num_blocks_dict[num_layers]
+
+    # num_filters
+    filters_list = [64, 128, 256, 512]
+
+    inp = tf.keras.layers.Input(shape=input_shape)
+    x = tf.keras.layers.Conv2D(
+        64,
+        7,
+        2,
+        padding='same'
+    )(inp)
+    x = tf.keras.layers.MaxPooling2D(
+        3,
+        2,
+        padding='same'
+    )(x)
+
+    # resnext blocks!
+    halved = True
+    for e, nb_filter in enumerate(zip(num_blocks, filters_list)):
+        nb, k = nb_filter
+        # if e+1 == len(num_blocks):
+        #     halved = True
+        x = create_resnextBlocks(x, k, nb, resnextblock, halved, cardinality)
 
     # average pooling and softmax
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
