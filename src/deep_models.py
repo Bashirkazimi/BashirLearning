@@ -912,7 +912,7 @@ def inception_v2_or_v3(input_shape=(299,299,3), num_classes=1000, v=3):
 
 def resnetblock_v1(input_tensor, filters):
     """
-    implements a simple resnet block
+    implements a v1 resnet block
     :param input_tensor: input tensor
     :type input_tensor: keras tensor
     :param filters: filters to apply
@@ -940,7 +940,7 @@ def resnetblock_v1(input_tensor, filters):
 
 def resnetblock_v2(input_tensor, filters):
     """
-    implements an advanced resnet block
+    implements a v2 resnet block
     :param input_tensor: input tensor
     :type input_tensor: keras tensor
     :param filters: filters to apply
@@ -983,6 +983,8 @@ def create_resnetBlocks(x, filter, n, resnetBlockFunc, halved=False):
     :type filter: integer
     :param n: how many blocks
     :type n: integer
+    :param resnetBlockFunc: which version to use
+    :type python function
     :param halved: reduced spatial dimension or not
     :type halved: boolean
     :return: keras tensor result
@@ -1000,23 +1002,23 @@ def create_resnetBlocks(x, filter, n, resnetBlockFunc, halved=False):
     return x
 
 
-def resnet(input_shape=(224,224,3), num_classes=1000, block_version=1, num_layers = 34):
+def resnet(input_shape=(224,224,3), num_classes=1000, version=1, num_layers = 34):
     """
     ResNet model based on https://arxiv.org/pdf/1512.03385v1.pdf
     :param input_shape: shape of the input image
     :type input_shape: tuple of 3 integers
     :param num_classes: number of categories
     :type num_classes: integer
-    :param block_version: simple resnet block (1) or advanced(2)
-    :type block_version: integer
+    :param version: resnet v1 or v2
+    :type version: integer
     :param num_layers: number of layers (one of [18, 34, 50, 101, 152])
     :type num_layers: integer
     :return: a resnet classification model
     :rtype: keras model
     """
 
-    # use simple or advanced resnet block?
-    blockFunc = resnetblock_v1 if block_version == 1 else resnetblock_v2
+    # use v1 or v2 resnet block?
+    blockFunc = resnetblock_v1 if version == 1 else resnetblock_v2
 
     # how many resnet blocks based on num_layers argument
     num_blocks_dict = {18: [2,2,2,2], 34: [3,4,6,3], 50: [3,4,6,3], 101: [3,4,23,3], 152: [3,8,36,3]}
