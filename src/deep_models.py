@@ -5,7 +5,7 @@ Author: Bashir Kazimi
 """
 
 import tensorflow as tf
-from tensorflow.keras import layers, Model
+from tensorflow.keras import layers, Model, Sequential
 
 
 class LRN(layers.Layer):
@@ -50,7 +50,7 @@ def alex_net(
     :rtype: keras model
     """
     # initialize the model
-    model = tf.keras.Sequential()
+    model = Sequential()
 
     # add first block of convolution, max pooling and batch normalization
     i = 0
@@ -209,7 +209,7 @@ def vgg_net(input_shape=(224,224,3),num_classes=1000):
     :rtype: keras model
     """
     filters = [64, 128, 256, 512, 512]
-    model = tf.keras.Sequential()
+    model = Sequential()
 
     # First Block
     i = 0
@@ -683,7 +683,7 @@ def auxiliary_classifier(input_tensor, v=3, num_classes=1000):
     if v==3:
         fc1 = layers.BatchNormalization()(fc1)
     fc1 = layers.Dropout(
-        rate=0.7
+        rate=0.5
     )(fc1)
     fc2 = layers.Dense(num_classes)(fc1)
     return fc2
