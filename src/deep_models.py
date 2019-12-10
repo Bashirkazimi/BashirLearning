@@ -911,9 +911,38 @@ def inception_v2_or_v3(input_shape=(299,299,3), num_classes=1000, v=3):
     return model
 
 
-def resnetblock_v1(input_tensor, filters):
+def resnetblock_fewlayers_v2(input_tensor, filters):
     """
-    implements a v1 resnet block
+    implements a resnet v2 block for resnet model with 18 and 34 layers
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :param filters: filters to apply
+    :type filters: integer
+    :return: output of a resnet block
+    :rtype: keras tensor
+    """
+    x = layers.BatchNormalization()(input_tensor)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(
+        filters,
+        3,
+        padding='same'
+    )(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(
+        filters,
+        3,
+        padding='same'
+    )(x)
+    x = x+input_tensor
+    return x
+
+
+def resnetblock_fewlayers(input_tensor, filters):
+    """
+    implements a resnet block for resnet model with 18 and 34 layers
     :param input_tensor: input tensor
     :type input_tensor: keras tensor
     :param filters: filters to apply
@@ -939,10 +968,46 @@ def resnetblock_v1(input_tensor, filters):
     return x
 
 
-def resnetblock_v2(input_tensor, filters):
+def resnetblock_morelayers_v2(input_tensor, filters):
     """
-    implements a v2 resnet block. Instead of zero padding for shortcut connection, I have made sure the filters at
-    the end match the filters in the input tensor.
+    implements a resnet block v2 for resnet model with above 50 layers. Instead of zero padding for shortcut connection,
+    I have made sure the filters at the end match the filters in the input tensor.
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :param filters: filters to apply
+    :type filters: integer
+    :return: output of a resnet block
+    :rtype: keras tensor
+    """
+    x = layers.BatchNormalization()(input_tensor)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(
+        filters//4,
+        1,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(
+        filters//4,
+        3,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(
+        filters,
+        1,
+        padding='same'
+    )(x)
+    x = x+input_tensor
+    return x
+
+
+def resnetblock_morelayers(input_tensor, filters):
+    """
+    implements a resnet block for resnet model with above 50 layers. Instead of zero padding for shortcut connection,
+    I have made sure the filters at the end match the filters in the input tensor.
     :param input_tensor: input tensor
     :type input_tensor: keras tensor
     :param filters: filters to apply
@@ -1093,7 +1158,10 @@ def resnet(input_shape=(224,224,3), num_classes=1000, version=1, num_layers = 34
     """
 
     # use v1 or v2 resnet block?
-    blockFunc = resnetblock_v1 if version == 1 else resnetblock_v2
+    if version == 1:
+        blockFunc = resnetblock_fewlayers if num_layers <= 34 else resnetblock_morelayers
+    else:
+        blockFunc = resnetblock_fewlayers_v2 if num_layers <= 34 else resnetblock_morelayers_v2
     # print(blockFunc)
 
     # how many resnet blocks based on num_layers argument
@@ -1131,6 +1199,7 @@ def resnet(input_shape=(224,224,3), num_classes=1000, version=1, num_layers = 34
     # create model and return
     model = Model(inputs=inp, outputs=x)
     model.summary()
+    print(blockFunc)
     return model
 
 

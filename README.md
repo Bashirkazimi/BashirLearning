@@ -8,5 +8,6 @@ have tried to implement them just so I could have a better understanding of each
 - [VGG Net: Very Deep Convolutional Networks for Large-Scale Image Recognition (2014)](https://arxiv.org/pdf/1409.1556.pdf)
 - [Inception v1: Going Deeper with Convolution (2014)](https://arxiv.org/abs/1409.4842)
 - [Inception v2 and v3: Rethinking the Inception Architecture for Computer Vision (2015)](https://arxiv.org/pdf/1512.00567v3.pdf)
-- [ResNet: Deep Residual Learning for Image Recognition (2015)](https://arxiv.org/pdf/1512.03385v1.pdf)
+- [ResNet v1: Deep Residual Learning for Image Recognition (2015)](https://arxiv.org/pdf/1512.03385v1.pdf)
+- [ResNet v2: Identity Mapping in Deep Residual Networks (2016)](https://arxiv.org/pdf/1603.05027.pdf)
 - [ResNext: Aggregated Residual Transformations for Deep Neural Networks (2017)](https://arxiv.org/pdf/1611.05431.pdf)
