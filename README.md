@@ -14,3 +14,5 @@ have tried to implement them just so I could have a better understanding of each
 - [Inception v4, Inception-ResNet V1 and V2: The impact of Residual 
 Connections on Learning (2016)](https://arxiv.org/pdf/1602.07261.pdf)
 - [Xception Model: Deep Learning with Depthwise Separable Convolutions (2017)](https://arxiv.org/pdf/1610.02357.pdf)
+- [MobileNet v1: Efficient Convolutional Neural Networks for Mobile Vision
+Applications (2017)](https://arxiv.org/pdf/1704.04861.pdf)

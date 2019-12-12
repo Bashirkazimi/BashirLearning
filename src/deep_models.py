@@ -2538,3 +2538,89 @@ def xception_net(input_shape=(299,299,3), num_classes=1000):
     return model
 
 
+def mobile_dw_conv(input_tensor, filter, kernel, stride):
+    """
+    a depthwise separable convolution with given filter and kernel size and
+    stride
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :param filter: number of output filters
+    :type filter: integer
+    :param kernel: number of kernels
+    :type kernel: integer
+    :param stride: stride
+    :type stride: integer
+    :return: output of dws convolution
+    :rtype: keras tensor
+    """
+    x = layers.DepthwiseConv2D(
+        kernel,
+        stride,
+        'same',
+        1
+    )(input_tensor)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(
+        filter,
+        1,
+        1,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+
+    return x
+
+
+def mobile_net(input_shape=(224,224,3), num_classes=1000):
+    """
+    mobile net v1 based on https://arxiv.org/pdf/1704.04861.pdf
+    :param input_shape: input shape
+    :type input_shape: tuple of 3 integers
+    :param num_classes: number of categories
+    :type num_classes: integer
+    :return:mobile net model
+    :rtype: tf.keras.Model
+    """
+    input = layers.Input(shape=input_shape)
+
+    x = layers.Conv2D(
+        32,
+        3,
+        2,
+        padding='same'
+    )(input)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+
+    x = mobile_dw_conv(x, 32, 3, 1)
+    x = mobile_dw_conv(x, 64, 3, 2)
+    x = mobile_dw_conv(x, 128, 3, 1)
+    x = mobile_dw_conv(x, 128, 3, 2)
+    x = mobile_dw_conv(x, 256, 3, 1)
+    x = mobile_dw_conv(x, 256, 3, 2)
+
+    for i in range(5):
+        x = mobile_dw_conv(x, 512, 3, 1)
+
+    x = mobile_dw_conv(x, 512, 3, 2)
+    x = mobile_dw_conv(x, 1024, 3, 1)
+
+    x = layers.AveragePooling2D(7, 1)(x)
+
+    x = layers.Conv2D(
+        num_classes,
+        1,
+        1,
+        padding='same'
+    )(x)
+
+    x = layers.Reshape((num_classes,))(x)
+    x = layers.Activation('softmax')(x)
+
+    model = Model(inputs=input, outputs=x)
+    model.summary()
+
+    return model
+
