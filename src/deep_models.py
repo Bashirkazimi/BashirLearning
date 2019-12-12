@@ -2288,3 +2288,253 @@ def inception_v4(input_shape=(299,299,3), num_classes=1000):
     model.summary()
 
     return model
+
+
+def sep_conv(input_tensor, filter):
+    """
+    separable convolution
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :param filter: number of filters
+    :type filter: integer
+    :return: output of separable convolution
+    :rtype: keras tensor
+    """
+    x = layers.SeparableConv2D(
+        filter,
+        3,
+        1,
+    )(input_tensor)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+
+    return x
+
+
+def entry_block_1(input_tensor):
+    """
+    Block 1 of entry flow in xception net
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :return: output of block 1 entry flow
+    :rtype: keras tensor
+    """
+    x = layers.Conv2D(
+        32,
+        3,
+        2
+    )(input_tensor)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(
+        64,
+        3,
+        1
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+
+    return x
+
+
+def entry_sep_conv_block(input_tensor, filter):
+    """
+    Sep conv Block of entry flow in xception net
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :param filter: filters
+    :type filter: integer
+    :return: output of block sep_conv in entry flow
+    :rtype: keras tensor
+    """
+    x = layers.SeparableConv2D(
+        filter,
+        3,
+        1,
+        padding='same'
+    )(input_tensor)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.SeparableConv2D(
+        filter,
+        3,
+        1,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.MaxPooling2D(
+        3,
+        2,
+        padding='same'
+    )(x)
+
+    return x
+
+
+def entry_flow(input_tensor):
+    """
+    Entry flow of the xception network
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :return: output of entry flow
+    :rtype: keras tensor
+    """
+    x = entry_block_1(input_tensor)
+    sep_conv_e_1 = entry_sep_conv_block(x, 128)
+
+    side_conv1 = layers.Conv2D(
+        128,
+        1,
+        2,
+    )(x)
+    side_conv1 = layers.BatchNormalization()(side_conv1)
+
+    x = side_conv1 + sep_conv_e_1
+
+    x = layers.Activation('relu')(x)
+    sep_conv_e_2 = entry_sep_conv_block(x, 256)
+    side_conv2 = layers.Conv2D(
+        256,
+        1,
+        2
+    )(side_conv1)
+    side_conv2 = layers.BatchNormalization()(side_conv2)
+
+    x = side_conv2 + sep_conv_e_2
+
+    x = layers.Activation('relu')(x)
+    sep_conv_e_3 = entry_sep_conv_block(x, 728)
+    side_conv3 = layers.Conv2D(
+        728,
+        1,
+        2
+    )(side_conv2)
+    side_conv3 = layers.BatchNormalization()(side_conv3)
+
+    return side_conv3+sep_conv_e_3
+
+
+def mid_flow(input_tensor):
+    """
+    middle flow block of xception
+    :param input_tensor: input_tensor
+    :type input_tensor: keras tensor
+    :return: output of middle flow of xception
+    :rtype: keras tensor
+    """
+    x = layers.Activation('relu')(input_tensor)
+    x = layers.SeparableConv2D(
+        728,
+        3,
+        1,
+        padding='same'
+    )(x)
+    x = layers.Activation('relu')(input_tensor)
+    x = layers.SeparableConv2D(
+        728,
+        3,
+        1,
+        padding='same'
+    )(x)
+    x = layers.Activation('relu')(input_tensor)
+    x = layers.SeparableConv2D(
+        728,
+        3,
+        1,
+        padding='same'
+    )(x)
+
+    return input_tensor + x
+
+
+def exit_flow(input_tensor):
+    """
+    exit flow of xception
+    :param input_tensor: input tensor
+    :type input_tensor: keras tensor
+    :return: output of exit flow
+    :rtype: keras tensor
+    """
+    x = layers.Activation('relu')(input_tensor)
+    x = layers.SeparableConv2D(
+        728,
+        3,
+        1,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.SeparableConv2D(
+        1024,
+        3,
+        1,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.MaxPooling2D(
+        3,
+        2,
+        padding='same'
+    )(x)
+
+    side_conv = layers.Conv2D(
+        1024,
+        1,
+        2
+    )(input_tensor)
+    side_conv = layers.BatchNormalization()(side_conv)
+
+    x = side_conv + x
+
+    x = layers.SeparableConv2D(
+        1536,
+        3,
+        1,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+
+    x = layers.SeparableConv2D(
+        2048,
+        3,
+        1,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+
+    return x
+
+
+def xception_net(input_shape=(299,299,3), num_classes=1000):
+    """
+    Xception net based on https://arxiv.org/pdf/1610.02357.pdf
+    :param input_shape: input shape
+    :type input_shape: tuple of 3 integers
+    :param num_classes: number of categories
+    :type num_classes: integer
+    :return:xception model
+    :rtype: tf.keras.Model
+    """
+    input = layers.Input(shape=input_shape)
+
+    # entry flow
+    x = entry_flow(input)
+
+    # middle flow, default to 8, some use 16
+    for i in range(8):
+        x = mid_flow(x)
+
+    # exit flow
+    x = exit_flow(x)
+
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dense(num_classes, activation='softmax')(x)
+
+    model = Model(inputs=input, outputs=x)
+    model.summary()
+
+    return model
+
+

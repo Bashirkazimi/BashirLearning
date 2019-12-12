@@ -13,3 +13,4 @@ have tried to implement them just so I could have a better understanding of each
 - [ResNext: Aggregated Residual Transformations for Deep Neural Networks (2017)](https://arxiv.org/pdf/1611.05431.pdf)
 - [Inception v4, Inception-ResNet V1 and V2: The impact of Residual 
 Connections on Learning (2016)](https://arxiv.org/pdf/1602.07261.pdf)
+- [Xception Model: Deep Learning with Depthwise Separable Convolutions (2017)](https://arxiv.org/pdf/1610.02357.pdf)
