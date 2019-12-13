@@ -2538,14 +2538,14 @@ def xception_net(input_shape=(299,299,3), num_classes=1000):
     return model
 
 
-def mobile_dw_conv(input_tensor, filter, kernel, stride):
+def mobile_dw_conv(input_tensor, filter_size, kernel, stride):
     """
     a depthwise separable convolution with given filter and kernel size and
     stride
     :param input_tensor: input tensor
     :type input_tensor: keras tensor
-    :param filter: number of output filters
-    :type filter: integer
+    :param filter_size: number of output filters
+    :type filter_size: integer
     :param kernel: number of kernels
     :type kernel: integer
     :param stride: stride
@@ -2562,7 +2562,7 @@ def mobile_dw_conv(input_tensor, filter, kernel, stride):
     x = layers.BatchNormalization()(x)
     x = layers.Activation('relu')(x)
     x = layers.Conv2D(
-        filter,
+        filter_size,
         1,
         1,
         padding='same'
@@ -2607,7 +2607,16 @@ def mobile_net(input_shape=(224,224,3), num_classes=1000):
     x = mobile_dw_conv(x, 512, 3, 2)
     x = mobile_dw_conv(x, 1024, 3, 1)
 
-    x = layers.AveragePooling2D(7, 1)(x)
+    # The line commented below is the way they implemented in the paper,
+    # but I am changing it convolutionan followed by GlobalAveragePooling2D
+    # so that input of any size could be used!!
+    # x = layers.AveragePooling2D(7, 1)(x)
+    # x = layers.Conv2D(
+    #     num_classes,
+    #     1,
+    #     1,
+    #     padding='same'
+    # )(x)
 
     x = layers.Conv2D(
         num_classes,
@@ -2615,6 +2624,7 @@ def mobile_net(input_shape=(224,224,3), num_classes=1000):
         1,
         padding='same'
     )(x)
+    x = layers.GlobalAveragePooling2D()(x)
 
     x = layers.Reshape((num_classes,))(x)
     x = layers.Activation('softmax')(x)
@@ -2623,4 +2633,116 @@ def mobile_net(input_shape=(224,224,3), num_classes=1000):
     model.summary()
 
     return model
+
+
+def fcn(input_shape=(128, 128, 3), num_classes=21):
+    """
+    Fully Convolutional Networks for Semantic Segmentation based on
+    https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf
+    :param input_shape: input shape
+    :type input_shape: tuple of 3 integers, must be powers of 2 (i.e., 64,
+    128, 256, 512, etc)
+    :param num_classes: number of categories
+    :type num_classes: integer
+    :return: fcn model
+    :rtype: tf.keras.Model
+    """
+
+    base_model = tf.keras.applications.vgg16.VGG16(input_shape=input_shape,
+                                                   weights=None,
+                                                   include_top=False)
+    layer_names = [
+        'block3_pool',
+        'block4_pool',
+        'block5_pool'
+    ]
+
+    feature_layers = [base_model.get_layer(name).output for name in layer_names]
+
+    feature_extractor = Model(inputs=base_model.input, outputs=feature_layers)
+
+    inputs = layers.Input(shape=input_shape)
+
+    pool3, pool4, pool5 = feature_extractor(inputs)
+
+    x = layers.Conv2D(
+        4096,
+        1,
+        1,
+        padding='same'
+    )(pool5)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(
+        4096,
+        1,
+        1,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(
+        num_classes,
+        1,
+        1,
+        padding='same'
+    )(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+
+    x = layers.Conv2DTranspose(
+        num_classes,
+        4,
+        2,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    # pool4
+    pool4 = layers.Conv2D(
+        num_classes,
+        1,
+        1
+    )(pool4)
+    pool4 = layers.BatchNormalization()(pool4)
+    pool4 = layers.Activation('relu')(pool4)
+
+    x = pool4+x
+
+    x = layers.Conv2DTranspose(
+        num_classes,
+        4,
+        2,
+        padding='same'
+    )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+
+    # pool3
+    pool3 = layers.Conv2D(
+        num_classes,
+        1,
+        1
+    )(pool3)
+    pool3 = layers.BatchNormalization()(pool3)
+    pool3 = layers.Activation('relu')(pool3)
+
+    x = x + pool3
+
+    x = layers.Conv2DTranspose(
+        num_classes,
+        16,
+        8,
+        padding='same'
+    )(x)
+
+    x = layers.Activation('softmax')(x)
+
+    model = Model(inputs=inputs, outputs=x)
+    model.summary()
+
+    return model
+
+
 
