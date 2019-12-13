@@ -2639,9 +2639,8 @@ def fcn(input_shape=(128, 128, 3), num_classes=21):
     """
     Fully Convolutional Networks for Semantic Segmentation based on
     https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf
-    :param input_shape: input shape
-    :type input_shape: tuple of 3 integers, must be powers of 2 (i.e., 64,
-    128, 256, 512, etc)
+    :param input_shape: input shape, height and width must be multiples of 32
+    :type input_shape: tuple of 3 integers.
     :param num_classes: number of categories
     :type num_classes: integer
     :return: fcn model
@@ -2740,6 +2739,150 @@ def fcn(input_shape=(128, 128, 3), num_classes=21):
     x = layers.Activation('softmax')(x)
 
     model = Model(inputs=inputs, outputs=x)
+    model.summary()
+
+    return model
+
+
+def down_conv(x, filter_size,padding):
+    """
+    down convolution for unet model
+    :param x: input tensor
+    :type x: keras tensor
+    :param filter_size: filter size
+    :type filter_size: integer
+    :param padding: padding to inputs to conv
+    :type padding: boolean
+    :return: output of convolution+maxpooling
+    :rtype: keras tensor
+    """
+    for i in range(2):
+        x = layers.Conv2D(
+            filter_size,
+            3,
+            1,
+            activation='relu',
+            padding=padding
+        )(x)
+
+    maxpooling = layers.MaxPooling2D(
+        2,
+        2
+    )(x)
+
+    return maxpooling, x
+
+
+def up_conv(x, skip, filter_size, similar=False):
+    """
+    up convolution for unet model
+    :param x: input tensor
+    :type x: keras tensor
+    :param skip: skip connection
+    :type skip: keras tensor
+    :param filter_size: filter size
+    :type filter_size: integer
+    :param similar: input size similar to output size or not?
+    :type similar: boolean
+    :return: output of up convolution
+    :rtype: keras tensor
+    """
+    x = layers.Conv2DTranspose(
+        filter_size,
+        2,
+        2,
+        padding='same'
+    )(x)
+
+    image_size = tf.keras.backend.int_shape(x)[1]
+    skip_size = tf.keras.backend.int_shape(skip)[1]
+
+    crop_size = (skip_size - image_size) // 2
+    cropped_tuple = (crop_size, crop_size)
+
+    # make proper cropping to skip connections or zero padding to x's based
+    # on whether similar or different input-ouput sizes are expected!
+    if (skip_size - image_size) % 2:
+        crop_size = crop_size
+        cropped_tuple = ((crop_size, crop_size+1), (crop_size+1, crop_size))
+
+    if not similar:  # just like original unet paper
+        skip = layers.Cropping2D(
+            cropped_tuple
+        )(skip)
+        padding='valid'
+    else:  # zero padding to x
+        x = layers.ZeroPadding2D(
+            cropped_tuple
+        )(x)
+        padding='same'
+
+    x = layers.Concatenate()([skip, x])
+
+    for i in range(2):
+        x = layers.Conv2D(
+            filter_size,
+            3,
+            1,
+            padding=padding,
+            activation='relu'
+        )(x)
+
+    return x
+
+
+def unet(input_shape=(572,572,1), num_classes=2, similar_output_size=False):
+    """
+    U-Net: CNN for Biomedical Image Segmentation
+    :param input_shape: input shape
+    :type input_shape: tuple of 3 integers
+    :param num_classes: number of categories
+    :type num_classes: integer
+    :param similar_output_size: if set to true, input and output size would
+    be same, otherwise, defaulted to the original unet paper
+    :type similar_output_size: boolean
+    :return: Unet model
+    :rtype: tf.keras.Model
+    """
+    input = layers.Input(shape=input_shape)
+
+    filter_size = 64
+    x = input
+    skips = []
+    padding = 'same' if similar_output_size else 'valid'
+
+    for i in range(4):
+        x, skip = down_conv(x, filter_size, padding)
+        skips.append(skip)
+        filter_size *= 2
+
+    x = layers.Conv2D(
+        filter_size,
+        3,
+        1,
+        activation='relu'
+    )(x)
+    x = layers.Conv2D(
+        filter_size,
+        3,
+        1,
+    )(x)
+
+    skips.reverse()
+
+    for i in range(4):
+        filter_size = filter_size // 2
+        x = up_conv(x, skips[i], filter_size, similar_output_size)
+
+    x = layers.Conv2D(
+        num_classes,
+        1,
+        1,
+        activation='softmax',
+        padding='same'
+    )(x)
+
+    model = Model(inputs=input, outputs=x)
     model.summary()
 
     return model
