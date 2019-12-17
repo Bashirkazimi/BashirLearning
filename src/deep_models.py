@@ -3086,4 +3086,96 @@ def segnet(input_shape=(224,224,3), num_classes=21):
     return model
 
 
+def atrous_conv(pool4, dilation_rate=12, filter_size=512, kernel_size=3,
+                num_classes=21):
+    """
+    Atrous Convolution and two 1x1 convolution operations
+    :param pool4: keras tensor to apply convs to
+    :type pool4: keras tensor
+    :param dilation_rate: dilation rate for the atrous conv
+    :type dilation_rate: integer
+    :param filter_size: filter size for the conv operations
+    :type filter_size: integer
+    :param kernel_size: kernel size for the atrous conv
+    :type kernel_size: integer
+    :param num_classes: number of classes to use instead filter for last conv
+    :type num_classes: integer
+    :return: output of atrous and two 1x1 conv
+    :rtype: keras tensor
+    """
+    x = layers.Conv2D(
+      filter_size,
+      kernel_size,
+      dilation_rate=dilation_rate,
+      padding='SAME'
+    )(pool4)
+
+    for i in range(2):
+        if i==1:
+            fs = num_classes
+        else:
+            fs = filter_size
+
+        x = layers.Conv2D(
+            fs,
+            1,
+            padding='same'
+        )(x)
+    return x
+
+
+def get_deeplab(input_shape=(224, 224, 3), type='LFOV',num_classes=21):
+    """
+    Deeplab v1 model based on https://arxiv.org/pdf/1606.00915.pdf
+    :param input_shape: input shape
+    :type input_shape: tuple of 3 integers
+    :param type: which architecture to use, one of (LFOV, ASPP-S, ASPP-L)
+    :type type: string
+    :param num_classes: number of categories
+    :type num_classes: integer
+    :return: deeplab model
+    :rtype: tf.keras.Model
+    """
+    base_model = tf.keras.applications.vgg16.VGG16(weights=None,
+                                                   input_shape=input_shape,
+                                                   include_top=False)
+    pool4 = base_model.output
+
+    if type=="LFOV":
+        x = atrous_conv(
+            pool4,
+            dilation_rate=12,
+            filter_size=512,
+            kernel_size=3,
+            num_classes=num_classes)
+    elif type=='ASPP-S':
+        xs = [atrous_conv(
+            pool4,
+            dilation_rate=dr,
+            num_classes=num_classes
+        ) for dr in [2, 4, 8, 12]
+        ]
+        x = layers.add(xs)
+    else: # type==ASPP-L
+        xs = [atrous_conv(
+            pool4,
+            dilation_rate=dr,
+            num_classes=num_classes
+        ) for dr in [6, 12, 18, 24]
+        ]
+        x = layers.add(xs)
+    last_shape = x.get_shape()
+
+    x = layers.UpSampling2D(
+        input_shape[0]//last_shape[1],
+        interpolation='bilinear'
+    )(x)
+    logits = x
+    softmax = layers.Activation('softmax')(x)
+
+    model = Model(inputs=base_model.input, outputs=[logits, softmax])
+    model.summary()
+
+    return model
+
 
