@@ -3086,7 +3086,7 @@ def segnet(input_shape=(224,224,3), num_classes=21):
     return model
 
 
-def atrous_conv(pool4, dilation_rate=12, filter_size=512, kernel_size=3,
+def atrous_conv(pool4, dilation_rate=12, filter_size=1024, kernel_size=3,
                 num_classes=21):
     """
     Atrous Convolution and two 1x1 convolution operations
@@ -3126,7 +3126,9 @@ def atrous_conv(pool4, dilation_rate=12, filter_size=512, kernel_size=3,
 
 def get_deeplab(input_shape=(224, 224, 3), type='LFOV',num_classes=21):
     """
-    Deeplab v1 model based on https://arxiv.org/pdf/1606.00915.pdf
+    Deeplab v1 and v2 model based on:
+    1. https://arxiv.org/pdf/1412.7062.pdf (v1 with type = 'LFOV')
+    2. https://arxiv.org/pdf/1606.00915.pdf (v2 with type from [ASPP-S, ASPP-L])
     :param input_shape: input shape
     :type input_shape: tuple of 3 integers
     :param type: which architecture to use, one of (LFOV, ASPP-S, ASPP-L)
@@ -3145,7 +3147,7 @@ def get_deeplab(input_shape=(224, 224, 3), type='LFOV',num_classes=21):
         x = atrous_conv(
             pool4,
             dilation_rate=12,
-            filter_size=512,
+            filter_size=1024,
             kernel_size=3,
             num_classes=num_classes)
     elif type=='ASPP-S':
