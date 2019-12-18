@@ -1199,7 +1199,7 @@ def resnet(input_shape=(224,224,3), num_classes=1000, version=1, num_layers = 34
     # create model and return
     model = Model(inputs=inp, outputs=x)
     model.summary()
-    print(blockFunc)
+    # print(blockFunc)
     return model
 
 
@@ -3168,6 +3168,9 @@ def get_deeplab(input_shape=(224, 224, 3), type='LFOV',num_classes=21):
         x = layers.add(xs)
     last_shape = x.get_shape()
 
+    # Originally, instead of upsampling this, the ground truths are
+    # downsampled during training, but we upsample the logits. Comment the
+    # following line out if downsampling gts is what you want
     x = layers.UpSampling2D(
         input_shape[0]//last_shape[1],
         interpolation='bilinear'
@@ -3179,5 +3182,120 @@ def get_deeplab(input_shape=(224, 224, 3), type='LFOV',num_classes=21):
     model.summary()
 
     return model
+
+
+def aspp(x, xshape, depth=256):
+    """
+    Atrous Spatial Pyramid Pooling for deeplab v3
+    :param x: inpute tensor
+    :type x: keras tensor
+    :param depth: number of channels
+    :type depth: integer
+    :param xshape: shape of the input tensor
+    :type xshape: list of 4 integers (batch, height, width, channels)
+    :return: aspp output
+    :rtype: keras tensor
+    """
+
+    image_pooling = layers.GlobalAveragePooling2D()(x)
+
+    image_pooling = layers.Reshape((1, 1, xshape[-1]))(image_pooling)
+    image_pooling = layers.Conv2D(
+        depth,
+        1,
+        padding='same'
+    )(image_pooling)
+
+    # image_pooling = layers.UpSampling2D(
+    #     xshape[1],
+    #     interpolation='bilinear'
+    # )(image_pooling)
+
+    image_pooling = tf.image.resize(
+        image_pooling,
+        xshape[1:3]
+    )
+
+    aspp1 = layers.Conv2D(
+        depth,
+        1,
+        1,
+        padding='SAME'
+    )(x)
+
+    aspp2 = layers.Conv2D(
+        depth,
+        3,
+        dilation_rate=12,
+        padding='same'
+    )(x)
+
+    aspp3 = layers.Conv2D(
+        depth,
+        3,
+        dilation_rate=24,
+        padding='same'
+    )(x)
+
+    aspp4 = layers.Conv2D(
+        depth,
+        3,
+        dilation_rate=36,
+        padding='same'
+    )(x)
+
+    concat = layers.Concatenate()([image_pooling, aspp1, aspp2, aspp3, aspp4])
+    conv = layers.Conv2D(
+        depth,
+        1,
+        1,
+        padding='SAME'
+    )(concat)
+
+    return conv
+
+
+def deeplab_v3(input_shape=(224,224,3), num_classes=21):
+    """
+    deeplab v3 based on https://arxiv.org/pdf/1706.05587.pdf
+    :param input_shape: input shape
+    :type input_shape: tuple of 3 integers
+    :param num_classes: number of categories
+    :type num_classes: integer
+    :return: deeplab v3 model
+    :rtype: tf.keras.Model
+    """
+    base_model = tf.keras.applications.resnet_v2.ResNet101V2(
+        input_shape=input_shape,
+        include_top=False,
+        weights=None
+    )
+
+    atrous_depth = 256
+    inp = layers.Input(shape=input_shape)
+    x = base_model(inp)
+
+    xshape = x.get_shape().as_list()
+    x = aspp(x, xshape, atrous_depth)
+
+    x = layers.Conv2D(
+        num_classes,
+        1,
+        padding='same'
+    )(x)
+
+    x = tf.image.resize(
+        x,
+        input_shape[0:2]
+    )
+
+    x = layers.Activation('softmax')(x)
+    # create model and return
+    model = Model(inputs=inp, outputs=x)
+    model.summary()
+
+    return model
+
+
 
 
