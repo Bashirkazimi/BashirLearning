@@ -1,5 +1,5 @@
 """
-Tensorflow keras implementation of deeplab v3
+Tensorflow keras implementation of deeplab v2
 https://github.com/Bashirkazimi/BashirLearning
 Author: Bashir Kazimi
 """
@@ -398,17 +398,18 @@ def resnet_for_deeplab(input, output_stride):
     return low_level_features, x
 
 
-def deeplab_v3(input_shape=(513,513,3), num_classes=21, output_stride=32,
-                   backbone='Xception'):
+def deeplab_v2(input_shape=(513,513,3), num_classes=21, output_stride=32,
+                   backbone='Xception', aspp_type='LFOV'):
     """
-    Deeplab v3 implementation based on https://arxiv.org/pdf/1706.05587.pdf
+    Deeplab v2 implementation based on https://arxiv.org/pdf/1606.00915.pdf
     Args:
         input_shape (tuple): input shape
         num_classes (int): number of categories
         output_stride (int): ratio of input image to output resolution
         backbone (str): backbone type, one of ['Xception', 'ResNet']
+        aspp_type (str): type of aspp layer, one of ['LFOV', 'ASPP-S', 'ASPP-L']
 
-    Returns: deeplab_v3 model (tf.keras.Model)
+    Returns: deeplab_v2 model (tf.keras.Model)
 
     """
     input = layers.Input(shape=input_shape)
@@ -416,18 +417,45 @@ def deeplab_v3(input_shape=(513,513,3), num_classes=21, output_stride=32,
     if backbone == 'Xception':
         entry_output, _ = entry_flow(input, output_stride)
         middle_flow_output = middle_flow(entry_output, output_stride)
-        exit_flow_output = exit_flow(middle_flow_output, output_stride)
-
-        aspp = atrous_spatial_pyrmaid_pooling(exit_flow_output, output_stride)
+        base_output = exit_flow(middle_flow_output, output_stride)
 
     else:  # 'ResNet'
-        _, resnet_output = resnet_for_deeplab(
+        _, base_output = resnet_for_deeplab(
             input,
             output_stride
         )
-        aspp = atrous_spatial_pyrmaid_pooling(resnet_output, output_stride)
 
-    x = atrous_conv(aspp, 256, 1, 1, 1, 'same')
+    if aspp_type=="LFOV":
+        x = atrous_conv(
+            base_output,
+            1024,
+            3,
+            1,
+            12,
+            'same'
+        )
+    elif aspp_type=='ASPP-S':
+        xs = [atrous_conv(
+            base_output,
+            1024,
+            3,
+            1,
+            dr,
+            'same'
+        ) for dr in [2, 4, 8, 12]
+        ]
+        x = layers.add(xs)
+    else:  # aspp_type==ASPP-L
+        xs = [atrous_conv(
+            base_output,
+            1024,
+            3,
+            1,
+            dr,
+            'same'
+        ) for dr in [6, 12, 18, 24]
+        ]
+        x = layers.add(xs)
 
     x = layers.Conv2D(
         num_classes,
@@ -436,11 +464,13 @@ def deeplab_v3(input_shape=(513,513,3), num_classes=21, output_stride=32,
         padding='same'
     )(x)
 
+    # Originally, instead of up sampling this, the ground truths are
+    # down sampled during training, but we up sample the logits. Comment the
+    # following line out if down sampling gts is what you want
     x = tf.image.resize(
         x,
         size=input_shape[:2]
     )
-
     x = layers.Activation('softmax')(x)
 
     model = Model(inputs=input, outputs=x)
