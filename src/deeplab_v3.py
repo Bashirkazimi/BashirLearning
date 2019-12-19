@@ -1,5 +1,5 @@
 """
-Tensorflow keras implementation of deeplab v3 plus
+Tensorflow keras implementation of deeplab v3
 https://github.com/Bashirkazimi/BashirLearning
 Author: Bashir Kazimi
 """
@@ -449,6 +449,8 @@ def deeplab_v3(input_shape=(513,513,3), num_classes=21, output_stride=32,
         x,
         size=input_shape[:2]
     )
+
+    x = layers.Activation('softmax')(x)
 
     model = Model(inputs=input, outputs=x)
     model.summary()
