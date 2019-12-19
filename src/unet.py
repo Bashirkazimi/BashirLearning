@@ -98,7 +98,7 @@ def unet(input_shape=(572,572,1), num_classes=2, similar_output_size=False):
     """
     U-Net implementation based on https://arxiv.org/pdf/1505.04597.pdf
     Args:
-        input_shape (tensor): input shape
+        input_shape (tuple): input shape
         num_classes (int): number of categories
         similar_output_size (bool): similar or different output size
 

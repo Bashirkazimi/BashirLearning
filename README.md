@@ -18,7 +18,9 @@ have tried to implement them just so I could have a better understanding of each
     - [MobileNet v1: Efficient Convolutional Neural Networks for Mobile Vision
     Applications (2017)](https://arxiv.org/pdf/1704.04861.pdf)
 - ### Semantic Segmentation Models
-    - [Fully Convolution Networks for Semantic Segmentation (2014)](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf)
+    - Fully Convolution Networks for Semantic Segmentation (2014)
+        - [Paper](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf)
+        - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/fcn.py)
     - U-Net: CNNs for Biomedical Image Segmentation (2015) 
         - [Paper](https://arxiv.org/pdf/1505.04597.pdf)
         - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/unet.py)
