@@ -28,3 +28,5 @@ have tried to implement them just so I could have a better understanding of each
     Atrous Convolution, and Fully Connected CRFs (2017)](https://arxiv.org/pdf/1606.00915.pdf)
     - [DeepLab v3: Rethinking Atrous Convolution for Semantic Image 
     Segmentation (2017) ](https://arxiv.org/pdf/1706.05587.pdf)
+    - DeepLab v3+: Encoder-Decoder with Atrous Separable Convolution for 
+    Semantic Image Segmentation (2018) [Paper](https://arxiv.org/pdf/1802.02611.pdf)

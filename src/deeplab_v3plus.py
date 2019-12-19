@@ -1,0 +1,360 @@
+"""
+Tensorflow keras implementation of deeplab v3 plus
+https://github.com/Bashirkazimi/BashirLearning
+Author: Bashir Kazimi
+"""
+
+import tensorflow as tf
+from tensorflow.keras import layers, Model, Sequential
+
+
+def conv_batch_relu(input, filters, kernel_size, strides, padding='same'):
+    """
+    Convolution, BatchNormalization, ReLU trio
+    Args:
+        input (keras tensor): input tensor
+        filters (int): filter size
+        kernel_size (int): kernel size
+        strides (int): stride size
+        padding (str): padding
+
+    Returns: output of relu (keras tensor)
+
+    """
+    x = layers.Conv2D(
+        filters=filters,
+        kernel_size=kernel_size,
+        strides=strides,
+        padding=padding
+    )(input)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    return x
+
+
+def sep_conv(input, filters, kernel_size, strides, rates, padding):
+    """
+    depthwise separable convolution
+    Args:
+        input (keras tensor): input tensor
+        filters (int): filter size
+        kernel_size (int): kernel size
+        strides (int): stride size
+        rates (int): dilation rate
+        padding (str): padding
+
+    Returns: output of depthwise separable conv
+
+    """
+    x = layers.DepthwiseConv2D(
+        kernel_size=kernel_size,
+        strides=strides,
+        padding=padding
+    )(input)
+    x = layers.Conv2D(
+        filters=filters,
+        kernel_size=1,
+        strides=1,
+        padding=padding
+    )(x)
+
+    return x
+
+
+def sep_conv_block(x, filters, kernel_size, strides, rates, padding):
+    """
+    depthwise separable convolution block for deeplab v3+
+    Args:
+        x (keras tensor): input tensor
+        filters (list of int): filter sizes
+        kernel_size (list of int): kernel sizes
+        strides (list of int): stride sizes
+        rates (list of int): dilation rates
+        padding (list of str): padding
+
+    Returns: keras tensor
+
+    """
+    for i in range(3):
+        x = sep_conv(
+            x,
+            filters[i],
+            kernel_size[i],
+            strides[i],
+            rates[i],
+            padding[i]
+        )
+    return x
+
+
+def entry_flow(input, output_stride=32):
+    """
+    entry flow block in xception for deeplab v3+
+    Args:
+        input (): keras input tensor
+        output_stride (int): ration of resolution of input to output
+
+    Returns: keras tensor
+
+    """
+    x = conv_batch_relu(
+        input,
+        filters=32,
+        kernel_size=3,
+        strides=2,
+        padding='same'
+    )
+    x = conv_batch_relu(
+        x,
+        filters=64,
+        kernel_size=3,
+        strides=1,
+        padding='same'
+    )
+    filters_lists = [
+        [128, 128, 128],
+        [256, 256, 256],
+        [728, 728, 728]
+    ]
+    strides_list = [
+        [1, 1, 2],
+        [1, 1, 2],
+        [1, 1, 2]
+    ]
+    rates_list = [
+        [1, 1, 1],
+        [1, 1, 1],
+        [1, 1, 1]
+    ]
+    paddings = ['same', 'same', 'same']
+    kernels = [3, 3, 3]
+
+    res_strides = [2, 2, 2]
+
+    res = conv_batch_relu(
+        x,
+        filters=128,
+        kernel_size=1,
+        strides=res_strides[0],
+        padding='same'
+    )
+
+    x = sep_conv_block(
+        x,
+        filters_lists[0],
+        kernels,
+        strides_list[0],
+        rates_list[0],
+        paddings
+    )
+
+    x = x + res
+
+    res2 = conv_batch_relu(
+        x,
+        filters=256,
+        kernel_size=1,
+        strides=res_strides[1],
+        padding='same'
+    )
+
+    x = sep_conv_block(
+        x,
+        filters_lists[1],
+        kernels,
+        strides_list[1],
+        rates_list[1],
+        paddings
+    )
+
+    x = x + res2
+
+    if output_stride == 8:
+        strides_list = [
+            [1, 1, 2],
+            [1, 1, 2],
+            [1, 1, 1]
+        ]
+        res_strides = [2, 2, 1]
+
+    res3 = conv_batch_relu(
+        x,
+        filters=728,
+        kernel_size=1,
+        strides=res_strides[2],
+        padding='same'
+    )
+    x = sep_conv_block(
+        x,
+        filters_lists[2],
+        kernels,
+        strides_list[2],
+        rates_list[2],
+        paddings
+    )
+
+    x = x + res3
+
+    return x, res
+
+
+def middle_flow(x, output_stride=32):
+    """
+    middle flow for xception in deeplab v3+
+    Args:
+        x (): input tensor
+        output_stride (int): input resolution/output resolution ratio
+
+    Returns: keras tensor
+
+    """
+    filters = [728]*3
+    kernel_size = [3]*3
+    strides = [1]*3
+    rates = [1]*3
+    padding = ['same']*3
+    if output_stride == 8:
+        rates = [2]*3
+
+    for i in range(16):
+        x = x + sep_conv_block(x, filters, kernel_size, strides, rates, padding)
+    return x
+
+
+def exit_flow(x, output_stride=32):
+    """
+    exit flow for xception in deeplab v3+
+    Args:
+        x (): input tensor
+        output_stride (int): input resolution/output resolution ratio
+
+    Returns: keras tensor
+
+    """
+    filters = [728, 1024, 1024]
+    kernel_size = [3]*3
+    strides = [1, 1, 2]
+    rates = [1]*3
+    padding = ['same']*3
+    res_stride = 2
+
+    if output_stride == 16:
+        strides = [1]*3
+        res_stride = 1
+
+    if output_stride == 8:
+        strides = [1]*3
+        res_stride = 1
+        rates = [2]*3
+
+    res = conv_batch_relu(
+        x,
+        filters=1024,
+        kernel_size=1,
+        strides=res_stride,
+        padding='same'
+    )
+
+    x = sep_conv_block(x, filters, kernel_size, strides, rates, padding)
+    x = x+res
+
+    filters = [1536, 1536, 2048]
+    kernel_size = [3]*3
+    strides = [1]*3
+    rates = [1]*3
+    padding = ['same']*3
+
+    if output_stride == 16:
+        rates = [2]*3
+    if output_stride == 8:
+        rates = [4]*3
+
+    x = sep_conv_block(x, filters, kernel_size, strides, rates, padding)
+
+    return x
+
+
+def atrous_spatial_pyrmaid_pooling(x, output_stride):
+    """
+    Atrous spatial pyramid pooling as in xception for deeplab v3+
+    Args:
+        x (keras tensor): input tensor to apply aspp to
+        output_stride (int): resolution ratio
+
+    Returns: keras tensor
+
+    """
+    if output_stride == 8:
+        rates = [12, 24, 36]
+    else:
+        rates = [6, 12, 18]
+    depth = 256
+    aspp_1 = sep_conv(x, depth, 1, 1, 1, 'same')
+    aspp_2 = sep_conv(x, depth, 3, 1, rates[0], 'same')
+    aspp_3 = sep_conv(x, depth, 3, 1, rates[1], 'same')
+    aspp_4 = sep_conv(x, depth, 3, 1, rates[2], 'same')
+
+    xshape = x.get_shape().as_list()
+    image_pooling = layers.GlobalAveragePooling2D()(x)
+    image_pooling = layers.Reshape((1, 1, xshape[-1]))(image_pooling)
+    image_pooling = conv_batch_relu(image_pooling, depth, 1, 1, 'same')
+    image_pooling = tf.image.resize(
+        image_pooling,
+        size=xshape[1:3]
+    )
+
+    x = layers.Concatenate()([aspp_1, aspp_2, aspp_3, aspp_4, image_pooling])
+    x = conv_batch_relu(x, depth, 1, 1, 'same')
+
+    return x
+
+
+def deeplab_v3plus(input_shape=(513,513,3), num_classes=21, output_stride=32,
+                   backbone='Xception'):
+    """
+    Deeplab v3+ implementation based on https://arxiv.org/pdf/1802.02611.pdf
+    Args:
+        input_shape (tuple): input shape
+        num_classes (int): number of categories
+        output_stride (int): ratio of input image to output resolution
+        backbone (str): backbone type, one of ['Xception', 'ResNet']
+
+    Returns: deeplab_v3plus model (tf.keras.Model)
+
+    """
+    input = layers.Input(shape=input_shape)
+
+    entry_output, low_level_features = entry_flow(input, output_stride)
+    middle_flow_output = middle_flow(entry_output, output_stride)
+    exit_flow_output = exit_flow(middle_flow_output, output_stride)
+
+    aspp = atrous_spatial_pyrmaid_pooling(exit_flow_output, output_stride)
+    aspp = tf.image.resize(
+        aspp,
+        size=low_level_features.shape[1:3]
+    )
+
+    low_level_features = conv_batch_relu(low_level_features, 48, 1, 1, 'same')
+    x = layers.Concatenate()([aspp, low_level_features])
+
+    x = sep_conv(x, 256, 3, 1, 1, 'same')
+
+    x = layers.Conv2D(
+        num_classes,
+        1,
+        1,
+        padding='same'
+    )(x)
+
+    x = tf.image.resize(
+        x,
+        size=input_shape[:2]
+    )
+
+    model = Model(inputs=input, outputs=x)
+    model.summary()
+
+    return model
+
+
