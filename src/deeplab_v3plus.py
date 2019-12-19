@@ -52,12 +52,19 @@ def sep_conv(input, filters, kernel_size, strides, rates, padding):
         strides=strides,
         padding=padding
     )(input)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
     x = layers.Conv2D(
         filters=filters,
         kernel_size=1,
         strides=1,
         padding=padding
     )(x)
+
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
 
     return x
 
@@ -310,6 +317,96 @@ def atrous_spatial_pyrmaid_pooling(x, output_stride):
     return x
 
 
+def resnet_block(inp, filters, dilation_rate, strides, kernel_size):
+    """
+    ResNet block with atrous convolution
+    Args:
+        inp (): input tensor
+        filters (int): filter size
+        dilation_rate (int): dilation rate
+        strides (int): stride
+        kernel_size (int): kernel size
+
+    Returns: keras tensor
+
+    """
+    x = inp
+
+    for i in range(2):
+        x = layers.BatchNormalization()(x)
+        x = layers.ReLU()(x)
+        x = sep_conv(x, filters, kernel_size, strides, dilation_rate, 'same')
+
+    x = x+inp
+
+    return x
+
+
+def stack_resnet_blocks(inp, filters, num_blocks, dilation_rate, strides,
+                        kernel_size):
+    """
+    stacks num_blocks blocks of residual modules with atrous separable conv
+    Args:
+        inp (): input tensor
+        filters (int): filter size
+        num_blocks (int): number of blocks to stack
+        dilation_rate (int): dilation rate
+        strides (int): stride
+        kernel_size (int): kernel size
+
+    Returns: keras tensor
+
+    """
+    x = inp
+    for i in range(num_blocks):
+        x = resnet_block(x, filters, dilation_rate, strides, kernel_size)
+
+    return x
+
+
+def resnet_for_deeplab(input, output_stride):
+    """
+    Resnet with atrous separable convolution
+    Args:
+        input (keras tensor): input tensor
+        output_stride (int): input to output image resolution ratio
+
+    Returns: keras tensor
+
+    """
+    x = layers.Conv2D(
+        filters=64,
+        kernel_size=7,
+        strides=2,
+        padding='same'
+    )(input)
+
+    filters_list = [64, 128, 256, 512]
+    num_blocks_list = [3, 4, 23, 3]
+    rates_list = [1, 1, 1, 1]
+    strides_list = [1, 1, 1, 1]
+    kernels_list = [3, 3, 3, 3]
+    sep_conv_stride = 2
+
+    for i in range(4):
+        if (output_stride == 8 and i > 1) or (output_stride == 16 and i > 2):
+            sep_conv_stride = 1
+            rates_list = [r*2 for r in rates_list]
+        x = sep_conv(x, filters_list[i], 3, sep_conv_stride, 1, 'same')
+        x = stack_resnet_blocks(
+            x,
+            filters=filters_list[i],
+            num_blocks=num_blocks_list[i],
+            dilation_rate=rates_list[i],
+            strides=strides_list[i],
+            kernel_size=kernels_list[i]
+        )
+        if i == 0:
+            low_level_features = x
+
+    return low_level_features, x
+
+
 def deeplab_v3plus(input_shape=(513,513,3), num_classes=21, output_stride=32,
                    backbone='Xception'):
     """
@@ -325,11 +422,20 @@ def deeplab_v3plus(input_shape=(513,513,3), num_classes=21, output_stride=32,
     """
     input = layers.Input(shape=input_shape)
 
-    entry_output, low_level_features = entry_flow(input, output_stride)
-    middle_flow_output = middle_flow(entry_output, output_stride)
-    exit_flow_output = exit_flow(middle_flow_output, output_stride)
+    if backbone == 'Xception':
+        entry_output, low_level_features = entry_flow(input, output_stride)
+        middle_flow_output = middle_flow(entry_output, output_stride)
+        exit_flow_output = exit_flow(middle_flow_output, output_stride)
 
-    aspp = atrous_spatial_pyrmaid_pooling(exit_flow_output, output_stride)
+        aspp = atrous_spatial_pyrmaid_pooling(exit_flow_output, output_stride)
+
+    else:  # 'ResNet'
+        low_level_features, resnet_output = resnet_for_deeplab(
+            input,
+            output_stride
+        )
+        aspp = atrous_spatial_pyrmaid_pooling(resnet_output, output_stride)
+
     aspp = tf.image.resize(
         aspp,
         size=low_level_features.shape[1:3]
@@ -356,5 +462,6 @@ def deeplab_v3plus(input_shape=(513,513,3), num_classes=21, output_stride=32,
     model.summary()
 
     return model
+
 
 
