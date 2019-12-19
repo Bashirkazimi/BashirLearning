@@ -110,17 +110,6 @@ def conv_batch_relu(x, filter_size, kernel_size):
     Returns:
 
     """
-    """
-    applies a convolution, batchnormalization and relu activation to x
-    :param x: inpute tensor
-    :type x: keras tensor
-    :param filter_size: filter size
-    :type filter_size: integer
-    :param kernel_size: kernel size
-    :type kernel_size: integer
-    :return: output tensor
-    :rtype: keras tensor
-    """
     x = layers.Conv2D(
         filter_size,
         kernel_size,
