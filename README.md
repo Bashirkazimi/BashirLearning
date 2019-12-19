@@ -20,8 +20,10 @@ have tried to implement them just so I could have a better understanding of each
 - ### Semantic Segmentation Models
     - [Fully Convolution Networks for Semantic Segmentation (2014)](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf)
     - [U-Net: CNNs for Biomedical Image Segmentation (2015) ](https://arxiv.org/pdf/1505.04597.pdf)
-    - [SegNet: A Deep Convolutional Encoder-Decoder Architecture for Image 
-    Segmentation (2016)](https://arxiv.org/pdf/1511.00561.pdf)
+    - SegNet: A Deep Convolutional Encoder-Decoder Architecture for Image 
+    Segmentation (2016)
+        - [Paper](https://arxiv.org/pdf/1511.00561.pdf)
+        - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/seg_net.py)
     - DeepLab v1: Semantic Image Segmentation with Deep Convolutional Nets, 
     and Fully Connected CRFs (2016)
         - [Paper](https://arxiv.org/pdf/1412.7062.pdf)
