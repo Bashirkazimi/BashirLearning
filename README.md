@@ -16,7 +16,9 @@ have tried to implement them just so I could have a better understanding of each
     - Inception v2 and v3: Rethinking the Inception Architecture for Computer Vision (2015)
         - [Paper](https://arxiv.org/pdf/1512.00567v3.pdf)
         - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/inception_v2_v3.py)
-    - [ResNet v1: Deep Residual Learning for Image Recognition (2015)](https://arxiv.org/pdf/1512.03385v1.pdf)
+    - ResNet v1: Deep Residual Learning for Image Recognition (2015)
+        - [Paper](https://arxiv.org/pdf/1512.03385v1.pdf)
+        - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/resnet.py)
     - [ResNet v2: Identity Mapping in Deep Residual Networks (2016)](https://arxiv.org/pdf/1603.05027.pdf)
     - [ResNext: Aggregated Residual Transformations for Deep Neural Networks (2017)](https://arxiv.org/pdf/1611.05431.pdf)
     - [Inception v4, Inception-ResNet V1 and V2: The impact of Residual 
