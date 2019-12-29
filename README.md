@@ -19,13 +19,13 @@ have tried to implement them just so I could have a better understanding of each
     - ResNet v1: Deep Residual Learning for Image Recognition (2015)
         - [Paper](https://arxiv.org/pdf/1512.03385v1.pdf)
         - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/resnet.py)
-    - [ResNet v2: Identity Mapping in Deep Residual Networks (2016)](https://arxiv.org/pdf/1603.05027.pdf)
+    - ResNet v2: Identity Mapping in Deep Residual Networks (2016)
+        - [Paper](https://arxiv.org/pdf/1603.05027.pdf)
+        - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/resnet.py)
     - [ResNext: Aggregated Residual Transformations for Deep Neural Networks (2017)](https://arxiv.org/pdf/1611.05431.pdf)
-    - [Inception v4, Inception-ResNet V1 and V2: The impact of Residual 
-    Connections on Learning (2016)](https://arxiv.org/pdf/1602.07261.pdf)
+    - [Inception v4, Inception-ResNet V1 and V2: The impact of Residual Connections on Learning (2016)](https://arxiv.org/pdf/1602.07261.pdf)
     - [Xception Model: Deep Learning with Depthwise Separable Convolutions (2017)](https://arxiv.org/pdf/1610.02357.pdf)
-    - [MobileNet v1: Efficient Convolutional Neural Networks for Mobile Vision
-    Applications (2017)](https://arxiv.org/pdf/1704.04861.pdf)
+    - [MobileNet v1: Efficient Convolutional Neural Networks for Mobile Vision Applications (2017)](https://arxiv.org/pdf/1704.04861.pdf)
 - ### Semantic Segmentation Models
     - Fully Convolution Networks for Semantic Segmentation (2014)
         - [Paper](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf)
