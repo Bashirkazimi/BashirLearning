@@ -193,22 +193,6 @@ def resnet(input_shape=(224, 224, 3), num_classes=1000, num_layers=50, version=2
         for j in range(cur_num_reps):
             x = blockfunc(x, cur_filters, kernels, strides, 'identity')
 
-    # x = resnet_block(x, [64, 64, 256], [1, 3, 1], [1,1,1], 'conv')
-    # for i in range(2):
-    #   x = resnet_block(x, [64, 64, 256], [1, 3, 1], [1,1,1], 'identity')
-
-    # x = resnet_block(x, [128, 128, 512], [1, 3, 1], [2,1,1], 'conv')
-    # for i in range(3):
-    #   x = resnet_block(x, [128, 128, 512], [1, 3, 1], [1,1,1], 'identity')
-
-    # x = resnet_block(x, [256, 256, 1024], [1, 3, 1], [2,1,1], 'conv')
-    # for i in range(5):
-    #   x = resnet_block(x, [256, 256, 1024], [1, 3, 1], [1,1,1], 'identity')
-
-    # x = resnet_block(x, [512, 512, 2048], [1, 3, 1], [2,1,1], 'conv')
-    # for i in range(2):
-    #   x = resnet_block(x, [512, 512, 2048], [1, 3, 1], [1,1,1], 'identity')
-
     if version == 2:
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
