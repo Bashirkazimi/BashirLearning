@@ -52,16 +52,15 @@ def resnext_block_a(inp, filter_size,
     Returns: resnet keras tensor
 
     """
-    total_x = None
+    xs = []
     for i in range(32):
         x = conv_batch_relu(inp, filter_size // 32, 1, strides_list[0], 'same', True)
         x = conv_batch_relu(x, filter_size // 32, 3, strides_list[1], 'same', True)
         x = conv_batch_relu(x, filter_size * 2, 1, strides_list[2], 'same', True, False)
-        if total_x is None:
-            total_x = x
-        else:
-            total_x += x
 
+        xs.append(x)
+
+    x = layers.Add()(xs)
     if res_type == 'identity':
         return layers.ReLU()(x+inp)
     else:
@@ -89,7 +88,7 @@ def resnext_block_b(inp, filter_size,
         x_list.append(x)
     x = layers.Concatenate()(x_list)
 
-    x = conv_batch_relu(x, filter_size *2, 3, strides_list[1], 'same', True, False)
+    x = conv_batch_relu(x, filter_size * 2, 1, strides_list[1], 'same', True, False)
 
     if res_type == 'identity':
         return layers.ReLU()(x+inp)
@@ -207,5 +206,3 @@ def resnext(input_shape=(224, 224, 3), num_classes=1000, num_layers=50, block_ty
     model.summary()
 
     return model
-
-
