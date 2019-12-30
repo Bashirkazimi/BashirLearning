@@ -28,7 +28,9 @@ have tried to implement them just so I could have a better understanding of each
     - Inception v4, Inception-ResNet V1 and V2: The impact of Residual Connections on Learning (2016)
         - [Paper](https://arxiv.org/pdf/1602.07261.pdf)
         - Code: [Inception-ResNet v1 & v2](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/inception_resnet.py), [Inception v4](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/inception_v4.py)
-    - [Xception Model: Deep Learning with Depthwise Separable Convolutions (2017)](https://arxiv.org/pdf/1610.02357.pdf)
+    - Xception Model: Deep Learning with Depthwise Separable Convolutions (2017)
+        - [Paper](https://arxiv.org/pdf/1610.02357.pdf)
+        - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/xception.py)
     - [MobileNet v1: Efficient Convolutional Neural Networks for Mobile Vision Applications (2017)](https://arxiv.org/pdf/1704.04861.pdf)
 - ### Semantic Segmentation Models
     - Fully Convolution Networks for Semantic Segmentation (2014)
