@@ -29,7 +29,7 @@ def mobile_dw_conv(input_tensor, filter_size, kernel, stride):
         use_bias=False
     )(input_tensor)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation('relu')(x)
+    x = layers.ReLU(6.0)(x)
     x = layers.Conv2D(
         filter_size,
         1,
@@ -38,7 +38,7 @@ def mobile_dw_conv(input_tensor, filter_size, kernel, stride):
         use_bias=False
     )(x)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation('relu')(x)
+    x = layers.ReLU(6.0)(x)
 
     return x
 
@@ -62,7 +62,7 @@ def mobile_net(input_shape=(224,224,3), num_classes=1000):
         use_bias=False
     )(input)
     x = layers.BatchNormalization()(x)
-    x = layers.Activation('relu')(x)
+    x = layers.ReLU(6.0)(x)
 
     x = mobile_dw_conv(x, 64, 3, 1)
     x = mobile_dw_conv(x, 128, 3, 2)
