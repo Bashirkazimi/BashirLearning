@@ -21,18 +21,24 @@ def v2_stem(input_tensor):
         2,
         padding='valid'
     )(input_tensor)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
     x = layers.Conv2D(
         32,
         3,
         1,
         padding='valid'
     )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
     x = layers.Conv2D(
         64,
         3,
         1,
         padding='same'
     )(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
     m = layers.MaxPooling2D(
         3,
         2,
@@ -44,6 +50,8 @@ def v2_stem(input_tensor):
         2,
         padding='valid'
     )(x)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.ReLU()(conv)
     x = layers.Concatenate()([m, conv])
     x1 = layers.Conv2D(
         64,
@@ -51,36 +59,48 @@ def v2_stem(input_tensor):
         1,
         padding='same'
     )(x)
+    x1 = layers.BatchNormalization()(x1)
+    x1 = layers.ReLU()(x1)
     x1 = layers.Conv2D(
         64,
         (7,1),
         1,
         padding='same'
     )(x1)
+    x1 = layers.BatchNormalization()(x1)
+    x1 = layers.ReLU()(x1)
     x1 = layers.Conv2D(
         64,
         (1,7),
         1,
         padding='same'
     )(x1)
+    x1 = layers.BatchNormalization()(x1)
+    x1 = layers.ReLU()(x1)
     x1 = layers.Conv2D(
         96,
         3,
         1,
         padding='valid'
     )(x1)
+    x1 = layers.BatchNormalization()(x1)
+    x1 = layers.ReLU()(x1)
     x2 = layers.Conv2D(
         64,
         1,
         1,
         padding='same'
     )(x)
+    x2 = layers.BatchNormalization()(x2)
+    x2 = layers.ReLU()(x2)
     x2 = layers.Conv2D(
         96,
         3,
         1,
         padding='valid'
     )(x2)
+    x2 = layers.BatchNormalization()(x2)
+    x2 = layers.ReLU()(x2)
     x = layers.Concatenate()([x2, x1])
     conv = layers.Conv2D(
         192,
@@ -88,6 +108,8 @@ def v2_stem(input_tensor):
         2,
         padding='valid'
     )(x)
+    conv = layers.BatchNormalization()(conv)
+    conv = layers.ReLU()(conv)
     m = layers.MaxPooling2D(
         strides=2,
         padding='valid'
@@ -113,42 +135,56 @@ def inception_v4_a(input_tensor):
         1,
         padding='same'
     )(avgpool)
+    conv_pool = layers.BatchNormalization()(conv_pool)
+    conv_pool = layers.ReLU()(conv_pool)
     conv1 = layers.Conv2D(
         96,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv1 = layers.BatchNormalization()(conv1)
+    conv1 = layers.ReLU()(conv1)
     conv2 = layers.Conv2D(
         64,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv2 = layers.Conv2D(
         96,
         3,
         1,
         padding='same'
     )(conv2)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv3 = layers.Conv2D(
         64,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     conv3 = layers.Conv2D(
         96,
         3,
         1,
         padding='same'
     )(conv3)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     conv3 = layers.Conv2D(
         96,
         3,
         1,
         padding='same'
     )(conv3)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     concat = layers.Concatenate()([conv_pool, conv1, conv2, conv3])
 
     return concat
@@ -179,24 +215,32 @@ def inception_resnet_reduction_a(input_tensor, version=1):
         2,
         padding='valid'
     )(input_tensor)
+    conv1 = layers.BatchNormalization()(conv1)
+    conv1 = layers.ReLU()(conv1)
     conv2 = layers.Conv2D(
         k,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv2 = layers.Conv2D(
         l,
         3,
         1,
         padding='same'
     )(conv2)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv2 = layers.Conv2D(
         m,
         3,
         2,
         padding='valid'
     )(conv2)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     x = layers.Concatenate()([maxpool, conv1, conv2])
     return x
 
@@ -218,60 +262,80 @@ def inception_v4_b(input_tensor):
         1,
         padding='same'
     )(avgpool)
+    conv_pool = layers.BatchNormalization()(conv_pool)
+    conv_pool = layers.ReLU()(conv_pool)
     conv1 = layers.Conv2D(
         384,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv1 = layers.BatchNormalization()(conv1)
+    conv1 = layers.ReLU()(conv1)
     conv2 = layers.Conv2D(
         192,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv2 = layers.Conv2D(
         224,
         (1,7),
         1,
         padding='same'
     )(conv2)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv2 = layers.Conv2D(
         256,
         (1,7),
         1,
         padding='same'
     )(conv2)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv3 = layers.Conv2D(
         192,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     conv3 = layers.Conv2D(
         192,
         (1,7),
         1,
         padding='same'
     )(conv3)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     conv3 = layers.Conv2D(
         224,
         (7,1),
         1,
         padding='same'
     )(conv3)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     conv3 = layers.Conv2D(
         224,
         (1,7),
         1,
         padding='same'
     )(conv3)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     conv3 = layers.Conv2D(
         256,
         (7,1),
         1,
         padding='same'
     )(conv3)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     concat = layers.Concatenate()([conv_pool, conv1, conv2, conv3])
 
     return concat
@@ -295,36 +359,48 @@ def inception_v4_reduction_b(input_tensor):
         1,
         padding='same'
     )(input_tensor)
+    conv1 = layers.BatchNormalization()(conv1)
+    conv1 = layers.ReLU()(conv1)
     conv1 = layers.Conv2D(
         192,
         3,
         2,
         padding='valid'
     )(conv1)
+    conv1 = layers.BatchNormalization()(conv1)
+    conv1 = layers.ReLU()(conv1)
     conv2 = layers.Conv2D(
         256,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv2 = layers.Conv2D(
         256,
         (1,7),
         1,
         padding='same'
     )(conv2)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv2 = layers.Conv2D(
         320,
         (7,1),
         1,
         padding='same'
     )(conv2)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv2 = layers.Conv2D(
         320,
         3,
         2,
         padding='valid'
     )(conv2)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     x = layers.Concatenate()([maxpoool, conv1, conv2])
 
     return x
@@ -347,60 +423,80 @@ def inception_v4_c(input_tensor):
         1,
         padding='same'
     )(avgpool)
+    conv_pool = layers.BatchNormalization()(conv_pool)
+    conv_pool = layers.ReLU()(conv_pool)
     conv1 = layers.Conv2D(
         256,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv1 = layers.BatchNormalization()(conv1)
+    conv1 = layers.ReLU()(conv1)
     conv2 = layers.Conv2D(
         384,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv2 = layers.BatchNormalization()(conv2)
+    conv2 = layers.ReLU()(conv2)
     conv21 = layers.Conv2D(
         256,
         (1,3),
         1,
         padding='same'
     )(conv2)
+    conv21 = layers.BatchNormalization()(conv21)
+    conv21 = layers.ReLU()(conv21)
     conv22 = layers.Conv2D(
         256,
         (3,1),
         1,
         padding='same'
     )(conv2)
+    conv22 = layers.BatchNormalization()(conv22)
+    conv22 = layers.ReLU()(conv22)
     conv3 = layers.Conv2D(
         384,
         1,
         1,
         padding='same'
     )(input_tensor)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     conv3 = layers.Conv2D(
         448,
         (1,3),
         1,
         padding='same'
     )(conv3)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     conv3 = layers.Conv2D(
         512,
         (3,1),
         1,
         padding='same'
     )(conv3)
+    conv3 = layers.BatchNormalization()(conv3)
+    conv3 = layers.ReLU()(conv3)
     conv31 = layers.Conv2D(
         256,
         (3,1),
         1,
         padding='same'
     )(conv3)
+    conv31 = layers.BatchNormalization()(conv31)
+    conv31 = layers.ReLU()(conv31)
     conv32 = layers.Conv2D(
         256,
         (1,3),
         1,
         padding='same'
     )(conv3)
+    conv32 = layers.BatchNormalization()(conv32)
+    conv32 = layers.ReLU()(conv32)
     x = layers.Concatenate()([conv_pool, conv1, conv21, conv22, conv31, conv32])
 
     return x

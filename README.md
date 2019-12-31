@@ -61,3 +61,4 @@ have tried to implement them just so I could have a better understanding of each
     Semantic Image Segmentation (2018) 
         - [Paper](https://arxiv.org/pdf/1802.02611.pdf) 
         - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/deeplab_v3plus.py)
+        
