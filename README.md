@@ -34,6 +34,9 @@ have tried to implement them just so I could have a better understanding of each
     - MobileNet v1: Efficient Convolutional Neural Networks for Mobile Vision Applications (2017)
         - [Paper](https://arxiv.org/pdf/1704.04861.pdf)
         - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/mobile_net.py)
+    - MobileNet v2: Inverted Residuals and Linear Bottlenecks (2019)
+        - [Paper](https://arxiv.org/pdf/1801.04381.pdf)
+        - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/mobile_net_v2.py)
 - ### Semantic Segmentation Models
     - Fully Convolution Networks for Semantic Segmentation (2014)
         - [Paper](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf)
