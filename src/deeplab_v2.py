@@ -273,41 +273,6 @@ def exit_flow(x, output_stride=32):
     return x
 
 
-def atrous_spatial_pyrmaid_pooling(x, output_stride):
-    """
-    Atrous spatial pyramid pooling as in xception for deeplab v3
-    Args:
-        x (keras tensor): input tensor to apply aspp to
-        output_stride (int): resolution ratio
-
-    Returns: keras tensor
-
-    """
-    if output_stride == 8:
-        rates = [12, 24, 36]
-    else:
-        rates = [6, 12, 18]
-    depth = 256
-    aspp_1 = atrous_conv(x, depth, 1, 1, 1, 'same')
-    aspp_2 = atrous_conv(x, depth, 3, 1, rates[0], 'same')
-    aspp_3 = atrous_conv(x, depth, 3, 1, rates[1], 'same')
-    aspp_4 = atrous_conv(x, depth, 3, 1, rates[2], 'same')
-
-    xshape = x.get_shape().as_list()
-    image_pooling = layers.GlobalAveragePooling2D()(x)
-    image_pooling = layers.Reshape((1, 1, xshape[-1]))(image_pooling)
-    image_pooling = conv_batch_relu(image_pooling, depth, 1, 1, 'same')
-    image_pooling = tf.image.resize(
-        image_pooling,
-        size=xshape[1:3]
-    )
-
-    x = layers.Concatenate()([aspp_1, aspp_2, aspp_3, aspp_4, image_pooling])
-    x = conv_batch_relu(x, depth, 1, 1, 'same')
-
-    return x
-
-
 def resnet_block(inp, filters, dilation_rate, strides, kernel_size):
     """
     ResNet block with atrous convolution

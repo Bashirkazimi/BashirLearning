@@ -28,6 +28,8 @@ def atrous_conv(base_output, dilation_rate=12, filter_size=1024, kernel_size=3,
       dilation_rate=dilation_rate,
       padding='SAME'
     )(base_output)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
 
     for i in range(2):
         if i == 1:
@@ -40,6 +42,8 @@ def atrous_conv(base_output, dilation_rate=12, filter_size=1024, kernel_size=3,
             1,
             padding='same'
         )(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.ReLU()(x)
     return x
 
 

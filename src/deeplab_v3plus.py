@@ -50,7 +50,8 @@ def sep_conv(input, filters, kernel_size, strides, rates, padding):
     x = layers.DepthwiseConv2D(
         kernel_size=kernel_size,
         strides=strides,
-        padding=padding
+        padding=padding,
+        dilation_rate=rates
     )(input)
 
     x = layers.BatchNormalization()(x)
