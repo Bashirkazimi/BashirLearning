@@ -37,6 +37,9 @@ have tried to implement them just so I could have a better understanding of each
     - MobileNet v2: Inverted Residuals and Linear Bottlenecks (2019)
         - [Paper](https://arxiv.org/pdf/1801.04381.pdf)
         - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/mobile_net_v2.py)
+    - HRNet Deep High-Resolution Representation Learning for Visual Recognition (2019)
+        - [Paper](https://arxiv.org/abs/1908.07919)
+        - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/hrnet.py)
 - ### Semantic Segmentation Models
     - Fully Convolution Networks for Semantic Segmentation (2014)
         - [Paper](https://people.eecs.berkeley.edu/~jonlong/long_shelhamer_fcn.pdf)
@@ -64,4 +67,6 @@ have tried to implement them just so I could have a better understanding of each
     Semantic Image Segmentation (2018) 
         - [Paper](https://arxiv.org/pdf/1802.02611.pdf) 
         - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/deeplab_v3plus.py)
-        
+    - HRNet Deep High-Resolution Representation Learning for Visual Recognition (2019)
+        - [Paper](https://arxiv.org/abs/1908.07919)
+        - [Code](https://github.com/Bashirkazimi/BashirLearning/blob/master/src/hrnet.py)
