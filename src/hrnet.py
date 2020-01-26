@@ -65,15 +65,15 @@ def stem_net(input):
     x = BatchNormalization(axis=3)(x)
     x = Activation('relu')(x)
 
-    x = bottleneck_Block(x, 128, with_conv_shortcut=True)
-    x = bottleneck_Block(x, 128, with_conv_shortcut=False)
-    x = bottleneck_Block(x, 128, with_conv_shortcut=False)
-    x = bottleneck_Block(x, 128, with_conv_shortcut=False)
+    x = bottleneck_Block(x, 256, with_conv_shortcut=True)
+    x = bottleneck_Block(x, 256, with_conv_shortcut=False)
+    x = bottleneck_Block(x, 256, with_conv_shortcut=False)
+    x = bottleneck_Block(x, 256, with_conv_shortcut=False)
 
     return x
 
 
-def transition_layer1(x, out_filters_list=[16, 32]):
+def transition_layer1(x, out_filters_list=[32, 64]):
     x0 = Conv2D(out_filters_list[0], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(x)
     x0 = BatchNormalization(axis=3)(x0)
     x0 = Activation('relu')(x0)
@@ -86,7 +86,7 @@ def transition_layer1(x, out_filters_list=[16, 32]):
     return [x0, x1]
 
 
-def make_branch1_0(x, out_filters=16):
+def make_branch1_0(x, out_filters=32):
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
@@ -94,7 +94,7 @@ def make_branch1_0(x, out_filters=16):
     return x
 
 
-def make_branch1_1(x, out_filters=32):
+def make_branch1_1(x, out_filters=64):
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
@@ -104,19 +104,19 @@ def make_branch1_1(x, out_filters=32):
 
 def fuse_layer1(x):
     x0_0 = x[0]
-    x0_1 = Conv2D(16, 1, use_bias=False, kernel_initializer='he_normal')(x[1])
+    x0_1 = Conv2D(32, 1, use_bias=False, kernel_initializer='he_normal')(x[1])
     x0_1 = BatchNormalization(axis=3)(x0_1)
     x0_1 = UpSampling2D(size=(2, 2))(x0_1)
     x0 = add([x0_0, x0_1])
 
-    x1_0 = Conv2D(32, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x[0])
+    x1_0 = Conv2D(64, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x[0])
     x1_0 = BatchNormalization(axis=3)(x1_0)
     x1_1 = x[1]
     x1 = add([x1_0, x1_1])
     return [x0, x1]
 
 
-def transition_layer2(x, out_filters_list=[16, 32, 64]):
+def transition_layer2(x, out_filters_list=[32, 64, 128]):
     x0 = Conv2D(out_filters_list[0], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(x[0])
     x0 = BatchNormalization(axis=3)(x0)
     x0 = Activation('relu')(x0)
@@ -133,7 +133,7 @@ def transition_layer2(x, out_filters_list=[16, 32, 64]):
     return [x0, x1, x2]
 
 
-def make_branch2_0(x, out_filters=16):
+def make_branch2_0(x, out_filters=32):
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
@@ -141,7 +141,7 @@ def make_branch2_0(x, out_filters=16):
     return x
 
 
-def make_branch2_1(x, out_filters=32):
+def make_branch2_1(x, out_filters=64):
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
@@ -149,7 +149,7 @@ def make_branch2_1(x, out_filters=32):
     return x
 
 
-def make_branch2_2(x, out_filters=64):
+def make_branch2_2(x, out_filters=128):
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
@@ -159,35 +159,35 @@ def make_branch2_2(x, out_filters=64):
 
 def fuse_layer2(x):
     x0_0 = x[0]
-    x0_1 = Conv2D(16, 1, use_bias=False, kernel_initializer='he_normal')(x[1])
+    x0_1 = Conv2D(32, 1, use_bias=False, kernel_initializer='he_normal')(x[1])
     x0_1 = BatchNormalization(axis=3)(x0_1)
     x0_1 = UpSampling2D(size=(2, 2))(x0_1)
-    x0_2 = Conv2D(16, 1, use_bias=False, kernel_initializer='he_normal')(x[2])
+    x0_2 = Conv2D(32, 1, use_bias=False, kernel_initializer='he_normal')(x[2])
     x0_2 = BatchNormalization(axis=3)(x0_2)
     x0_2 = UpSampling2D(size=(4, 4))(x0_2)
     x0 = add([x0_0, x0_1, x0_2])
 
-    x1_0 = Conv2D(32, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x[0])
+    x1_0 = Conv2D(64, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x[0])
     x1_0 = BatchNormalization(axis=3)(x1_0)
     x1_1 = x[1]
-    x1_2 = Conv2D(32, 1, use_bias=False, kernel_initializer='he_normal')(x[2])
+    x1_2 = Conv2D(64, 1, use_bias=False, kernel_initializer='he_normal')(x[2])
     x1_2 = BatchNormalization(axis=3)(x1_2)
     x1_2 = UpSampling2D(size=(2, 2))(x1_2)
     x1 = add([x1_0, x1_1, x1_2])
 
-    x2_0 = Conv2D(16, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x[0])
+    x2_0 = Conv2D(32, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x[0])
     x2_0 = BatchNormalization(axis=3)(x2_0)
     x2_0 = Activation('relu')(x2_0)
-    x2_0 = Conv2D(64, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x2_0)
+    x2_0 = Conv2D(128, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x2_0)
     x2_0 = BatchNormalization(axis=3)(x2_0)
-    x2_1 = Conv2D(64, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x[1])
+    x2_1 = Conv2D(128, 3, strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x[1])
     x2_1 = BatchNormalization(axis=3)(x2_1)
     x2_2 = x[2]
     x2 = add([x2_0, x2_1, x2_2])
     return [x0, x1, x2]
 
 
-def transition_layer3(x, out_filters_list=[16, 32, 64, 128]):
+def transition_layer3(x, out_filters_list=[32, 64, 128, 256]):
     x0 = Conv2D(out_filters_list[0], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(x[0])
     x0 = BatchNormalization(axis=3)(x0)
     x0 = Activation('relu')(x0)
@@ -208,7 +208,7 @@ def transition_layer3(x, out_filters_list=[16, 32, 64, 128]):
     return [x0, x1, x2, x3]
 
 
-def make_branch3_0(x, out_filters=16):
+def make_branch3_0(x, out_filters=32):
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
@@ -216,7 +216,7 @@ def make_branch3_0(x, out_filters=16):
     return x
 
 
-def make_branch3_1(x, out_filters=32):
+def make_branch3_1(x, out_filters=64):
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
@@ -224,7 +224,7 @@ def make_branch3_1(x, out_filters=32):
     return x
 
 
-def make_branch3_2(x, out_filters=64):
+def make_branch3_2(x, out_filters=128):
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
@@ -232,7 +232,7 @@ def make_branch3_2(x, out_filters=64):
     return x
 
 
-def make_branch3_3(x, out_filters=128):
+def make_branch3_3(x, out_filters=256):
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
     x = basic_Block(x, out_filters, with_conv_shortcut=False)
@@ -294,21 +294,21 @@ def hrnet_clf(input_shape=(224, 224, 3), classes=1000):
     x3 = make_branch3_3(x[3])  # 4thbig
     # x = fuse_layer3([x0, x1, x2, x3])
 
-    b0 = bottleneck_Block(x0, 64, strides=(1, 1), with_conv_shortcut=True)
-    b1 = bottleneck_Block(x1, 128, strides=(1, 1), with_conv_shortcut=True)
-    b2 = bottleneck_Block(x2, 256, strides=(1, 1), with_conv_shortcut=True)
-    b3 = bottleneck_Block(x3, 512, strides=(1, 1), with_conv_shortcut=True)
+    b0 = bottleneck_Block(x0, 128, strides=(1, 1), with_conv_shortcut=True)
+    b1 = bottleneck_Block(x1, 256, strides=(1, 1), with_conv_shortcut=True)
+    b2 = bottleneck_Block(x2, 512, strides=(1, 1), with_conv_shortcut=True)
+    b3 = bottleneck_Block(x3, 1024, strides=(1, 1), with_conv_shortcut=True)
 
-    b00 = conv3x3(b0, 128, strides=(2, 2))
+    b00 = conv3x3(b0, 256, strides=(2, 2))
     b01 = Add()([b00, b1])
 
-    b012 = conv3x3(b01, 256, strides=(2, 2))
+    b012 = conv3x3(b01, 512, strides=(2, 2))
     b02 = Add()([b012, b2])
 
-    b022 = conv3x3(b02, 512, strides=(2, 2))
+    b022 = conv3x3(b02, 1024, strides=(2, 2))
     x = Add()([b022, b3])
 
-    x = Conv2D(filters=1024, kernel_size=1, padding='same')(x)
+    x = Conv2D(filters=2048, kernel_size=1, padding='same')(x)
     x = GlobalAveragePooling2D()(x)
 
     out = Dense(classes, activation='softmax')(x)
