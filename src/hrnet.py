@@ -294,10 +294,10 @@ def hrnet_clf(input_shape=(224, 224, 3), classes=1000):
     x3 = make_branch3_3(x[3])  # 4thbig
     # x = fuse_layer3([x0, x1, x2, x3])
 
-    b0 = bottleneck_Block(x0, 128, strides=(1, 1), with_conv_shortcut=True)
-    b1 = bottleneck_Block(x1, 256, strides=(1, 1), with_conv_shortcut=True)
-    b2 = bottleneck_Block(x2, 512, strides=(1, 1), with_conv_shortcut=True)
-    b3 = bottleneck_Block(x3, 1024, strides=(1, 1), with_conv_shortcut=True)
+    b0 = basic_Block(x0, 128, strides=(1, 1), with_conv_shortcut=True)
+    b1 = basic_Block(x1, 256, strides=(1, 1), with_conv_shortcut=True)
+    b2 = basic_Block(x2, 512, strides=(1, 1), with_conv_shortcut=True)
+    b3 = basic_Block(x3, 1024, strides=(1, 1), with_conv_shortcut=True)
 
     b00 = conv3x3(b0, 256, strides=(2, 2))
     b01 = Add()([b00, b1])
